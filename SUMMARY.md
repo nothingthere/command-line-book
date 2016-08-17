@@ -11,6 +11,7 @@
 -   [5充分利用命令](learning-shell/5充分利用命令.md)
 -   [6重定向](learning-shell/6重定向.md)
 -   [7命令处理](learning-shell/7命令处理.md)
+-   [8快捷键](learning-shell/8快捷键.md)
 
 ## 第二章 配置和环境
 
