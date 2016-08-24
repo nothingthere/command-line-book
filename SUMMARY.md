@@ -17,6 +17,12 @@
 
 ## 第二章 配置和环境
 
+-   [1环境](configuration-and-enviroment/1环境.md)
+-   [2vim简介](configuration-and-enviroment/2vim简介.md)
+-   [3定制shell对话](configuration-and-enviroment/3定制shell对话.md)
+
 ## 第三章 一般任务和重要工具
 
 ## 第四章 编写shell脚本
+
+hell脚本
