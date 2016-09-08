@@ -19,8 +19,11 @@
 
 -   [1环境](configuration-and-enviroment/1环境.md)
 -   [2vim简介](configuration-and-enviroment/2vim简介.md)
--   [3定制shell对话](configuration-and-enviroment/3定制shell对话.md)
+-   [3定制shell对话](configuration-and-enviroment/3定制shell提示.md)
 
-## 第三章 一般任务和重要工具
+## 第三章 常见任务和重要工具
+
+-   [1包管理](common-tasks-and-essential-tools/1包管理.md)
+-   [2存储设备](common-tasks-and-essential-tools/2存储设备.md)
 
 ## 第四章 编写shell脚本
