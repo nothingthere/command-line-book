@@ -522,24 +522,24 @@
 	返回结果中，第一区域中的10个字符表示_文件属性_。其中第一个字母表示_文
 	件类型_，以下为常见的文件类型：
 
-    |   | 普通文件                                                           |
+    | - | 普通文件                                                           |
     | d | 文件夹                                                             |
     | l | 软链接，剩余的9个属性字符都为“rwxrwxrwx”，真实文件属性同其指向文件 |
-    | c | 字符型文件                                                        |
-    | b | 设备型文件                                                              |
+    | c | 字符型文件                                                         |
+    | b | 设备型文件                                                         |
 
 	剩余的9个字符3个一组，分别代表用户权限、用户组权限和全局权限。
 	“rwx”3个字符分别代表的含义：
 
-|r（只读）对文件而言，允许打开和读取；对文件夹而言，如果有执行属性，
-      允许列出文件夹中的内容。
+	- r（只读）对文件而言，允许打开和读取；对文件夹而言，如果有执行属
+      性，允许列出文件夹中的内容。
 
-|w（写入）允许文件被写入和清空，但不允许被重命名和删除，重命名和删
-      除权限取决于所在文件夹的权限；对文件夹而言，允许在文件夹中创建和
-      删除文件，如果有执行属性，允许重命名其中的文件。
+	- w（写入）允许文件被写入和清空，但不允许被重命名和删除，重命名和
+      删除权限取决于所在文件夹的权限；对文件夹而言，允许在文件夹中创建
+      和 删除文件，如果有执行属性，允许重命名其中的文件。
 
-|x（执行）允许文件被视作程序，并被执行。使用脚本语言编写的文件需设
-      置只读和执行权限；对文件夹而言，允许进入文件夹，如执行“cd
+	- x（执行）允许文件被视作程序，并被执行。使用脚本语言编写的文件需
+      设 置只读和执行权限；对文件夹而言，允许进入文件夹，如执行“cd
       directory”命令。
 
 **** 使用chmod命令更改文件权限
@@ -566,7 +566,7 @@
 
 	 表示操作的符号有：
      | + | 添加权限                               |
-     |   | 删除权限                               |
+     | - | 删除权限                               |
      | = | 删除所有已有权限，仅使用此处设置的权限 |
 
 	 例：
@@ -575,7 +575,7 @@
 	 _+x_：为拥有用户、用户组和全局用户添加执行权限，等价于“a+x”。
 	 _rw_：删除除拥有用户和用户组外，用户的读和写权限。
 	 _go=rw_：将拥有用户组和全局用户的权限设置为读和写。如果拥有用户
-       和其它用户有执行权限，删除。
+     和其它用户有执行权限，删除。
 
 **** 使用unmask命令设置文件默认权限
 	 不跟任何参数，查看mask值：
@@ -1311,6 +1311,7 @@ remove：删除该用户的home文件夹和mail spool，但文件系统中的
    - *fsck* ：检测和修复文件系统
    - *fdisk* ：磁盘分区表操作（Partition table manipulator）
    - *mkfs* ：创建文件系统
+   - *dd* ：将设备型文件直接写入设备
    - *fdformat* ：格式化软盘
    - *genisoimage（mkisofs）* ：创建一个ISO镜像文件
    - *wodim（cdrecord）* ：将数据写入存储介质（optical storage media）
@@ -1352,4 +1353,323 @@ remove：删除该用户的home文件夹和mail spool，但文件系统中的
        份。
 	6. 检测/修复（pass）。使用fsck检测和修复时的执行顺序。
 
+**** 查看已挂载的文件系统
+	 使用mount命令，不带任何参数，可查看当前已挂载的所有文件系统：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ mount
+       /dev/sda1 on / type ext4 (rw,relatime,errors=remount-ro,data=ordered)
+       securityfs on /sys/kernel/security type securityfs (rw,nosuid,nodev,noexec,relat
+       ime)
+       tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev)
+       tmpfs on /run/lock type tmpfs (rw,nosuid,nodev,noexec,relatime,size=5120k)
+       tmpfs on /sys/fs/cgroup type tmpfs (ro,nosuid,nodev,noexec,mode=755)
+       ...
+       /dev/sdb1 on /media/me/disk type vfat (rw,nosuid,nodev,relatime,uid=1000,gid=1000,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,showexec,utf8,flush,errors=remount-ro,uhelper=udisks2)
+	 #+END_EXAMPLE
+
+	 输出内容的格式为：“设备名 on 挂载点 type 文件类型（挂载选项）”。
+	 比如第一行的含义为，/dev/sda1设备挂载到根目录上，文件格式为ext4，
+	 可读可写（“rw”）。
+
+	 为测试，插入一张可读写光盘后，重新执行mount命令会新增如下内容：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ mount | less
+       ...
+       /dev/sr0 on /media/me/e-STUDIO Client type iso9660 (ro,nosuid,nodev,relatime,uid=1000,gid=1000,iocharset=utf8,mode=0400,dmode=0500,uhelper=udisks2)
+       ...
+	 #+END_EXAMPLE
+
+	 上例表示，光盘设备在系统中的设备名为/dev/sr0，挂载点为
+	 /media/me/e-STUDIO Client。
+
+	 取消挂载光盘：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ ls /media/me #可见光盘中内容
+       e-STUDIO Client
+       me@ubuntu16.04:~$ sudo umount /dev/sr0
+       me@ubuntu16.04:~$ ls /media/me
+       # 表示光盘的文件夹消失，表示取消挂载成功
+	 #+END_EXAMPLE
+
+	 为光盘新建一个挂载点，使用-t选项表示文件类型：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ sudo mkdir /mnt/cdrom # 新建文件夹
+       # 将光盘挂载到新建的文件夹上，iso9660为光盘的文件格式
+       me@ubuntu16.04:~$ sudo mount -t iso9660 /dev/sr0 /mnt/cdrom
+       me@ubuntu16.04:~$ ls /mnt/cdrom
+       ... #出现光盘内容，表示挂载成功
+       me@ubuntu16.04:~$ sudo umount /dev/sr0 #再次取消挂载
+       me@ubuntu16.04:~$ ls /mnt/cdrom
+       # 无任何内容，取消挂载成功
+	 #+END_EXAMPLE
+
+**** 判断设备名称
+	 在桌面系统中，设备自动挂载后可使用mount命令查看其在系统系统中的名
+	 称；但是，在不支持自动挂载的环境中（如服务器），则需要通过查看
+	 /dev文件夹来确定设备在系统中对应的名称。/dev文件夹包含了系统中所
+	 有设备（为何安卓手机设备不包含？）。
+
+	 不同类型设备有特定的命名规则：
+
+	 - fd*：软盘。
+
+	 - hd*：老式系统中的IDE硬盘（IDE即Integrated Drive Electronics）。
+       尤其是指主板有2个IED管道/接口（channels/connectors），每个接口
+       都由一 根有2个附着点的线路链接的硬盘？？。线路上的第一个硬盘称
+       为主设备， 第二个称为奴设备。命名规则为，/dev/hda表示第一个管道
+       上的主设备， /dev/hdb表示第一个管道上的奴设备；/dev/hdc表示第二
+       个管道上的主设备。 以此类推。名称后所跟数字表示在设备上的分区号，
+       比如/dev/hda1表示第 一个硬盘上的第一个分区，/dev/hda表示整个硬
+       盘。
+
+	 - /dev/lp*：打印机。
+
+	 - /dev/sd_：SCSI硬盘（是采用SCSI接口的硬盘，SCSI是Small Computer
+       System Interface”小型计算机系统接口“”的缩写，使用50针接口，外观
+       和普通硬盘接口有些相似）。在现代Linux系统中，内核将所有
+       disk-like设备（包括PATA/SATA硬盘、U盘、如mp3/4这样的USB大型存储
+       设备和数码相机）都视为SCSI硬盘。命名的后半部分和/dev/hd_设备规
+       则相同。
+
+	 - /dev/sr*：光驱（CD/DVD读取机/刻录机）。
+
+	 在不自动挂载移动设备的环境中，可使用tail命令实时查看系统日志来判
+	 断设备名称：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ sudo tail -f /var/log/syslog
+	 #+END_EXAMPLE
+
+	 以插入U盘为例，当插入U盘后，会出现类似如下的类容：
+	 #+BEGIN_EXAMPLE
+       ...
+       Aug 27 21:27:42 me kernel: [14505.508766]  sdb: sdb1
+       Aug 27 21:27:42 me kernel: [14505.509862] sd 8:0:0:0: [sdb] Attached SCSI removable disk
+       ...
+	 #+END_EXAMPLE
+
+	 通过上面结果可知，U盘对应的系统设备名称为/dev/sdb，/dev/sdb1为其
+	 第一分区。
+
+	 得知设备在系统上对应的名称后，就可将其挂载到文件树上：
+	 #+BEGIN_EXAMPLE
+       me@ubuntu16.04:~$ sudo mkdir /mnt/flash
+       me@ubuntu16.04:~$ sudo mount /dev/sdb1 /mnt/flash
+       me@ubuntu16.04:~$ df -h #使用df命令查看所有文件系统使用情况
+       ...
+       /dev/sdb1        14G  548M   14G   4% /media/me/disk
+       # /dev/sr0        594M  594M     0 100% /media/me/e-STUDIO Client
+	 #+END_EXAMPLE
+
+	 *重启前，挂载的设备会一直有效。*
+
+*** 创建新的文件系统
+	比如要将U盘原有的FAT32文件系统格式化为Linux本地文件系统，需2步：
+	1. （可选）修改分区。
+	2. 在U盘上创建新的空文件系统。
+
+**** 使用fdisk命令对设备分区
+	 以对U盘分区为例。首先需去挂载：
+	 #+BEGIN_EXAMPLE
+       sudo unmount /dev/sdb1
+       sudo fdisk /dev/sdb
+	 #+END_EXAMPLE
+
+	 *注意：使用fdisk操作设备时需使用整个设备，而不是单个分区。*
+
+	 程序启动后进入交换页面：
+	 #+BEGIN_EXAMPLE
+       Command (m for help):
+	 #+END_EXAMPLE
+
+	 使用m命令可查看所有可执行的命令：
+     | a |                                             |
+     | b |                                             |
+     | c |                                             |
+     | d | 删除一个分区                                |
+     | l | 列出所有有效的分区文件系统                  |
+     | m |                                             |
+     | n | 新建一个分区                                |
+     | o |                                             |
+     | p | 打印当前的分区情况                          |
+     | q | 不执行修改，退出                            |
+     | s |                                             |
+     | t | 改变设备的文件系统，从l命令中获取的ID中选择 |
+     | u |                                             |
+     | v |                                             |
+     | w | 确认更改，写入，并退出                      |
+     | x |                                             |
+
+	 首先使用p命令查看当前的分区情况：
+	 #+BEGIN_EXAMPLE
+       Disk /dev/sdb: 16 MB, 16006656 bytes
+       1 heads, 31 sectors/track, 1008 cylinders
+       Units = cylinders of 31 * 512 = 15872 bytes
+             Device      Boot   Start    End     Blocks    Id  System
+          /dev/sdb1             2        1008    15608+    b   W95 FAT32
+	 #+END_EXAMPLE
+
+	 可见，U盘设备为16MB，有1个分区（/dev/sdb1），使用了1008个扇面
+	 （cylinders）中的1006个（End - Start）。Id项显示的为格式化系统类
+	 型对应的编号（b），System则是其相应的名称。
+
+	 下面通过l命令查看可选格式化类型。
+
+	 使用t命令开始修改，选中83对应的Linux文件系统，最后执行w命令确认并
+	 退出。（如果不使用w命令，可使用q命令放弃所有修改并退出）
+**** 使用mksf创建新的文件系统
+	 对设备分区后，可使用mksf命令为各分区创建新的文件系统。使用-t参数
+	 指定文件系统类型，如：
+	 #+BEGIN_EXAMPLE
+       sudo mkfs -t ext4 /dev/sdb1
+	 #+END_EXAMPLE
+
+	 如需改回原有的FAT32文件系统，可使用vfat参数值指定：
+	 #+BEGIN_EXAMPLE
+       sudo mkfs -t vfat /dev/sdb1
+	 #+END_EXAMPLE
+
+*** 测试和修复文件系统
+	系统启动时，会自动执行fsck命令检查文件（对应设备），文件/etc/fstab
+	中最后一项为检查顺序。如果有错误，系统会停止启动。
+
+	此外fsck命令还可用于检查指定设备：
+	#+BEGIN_EXAMPLE
+      sudo fsck /dev/sdb1
+	#+END_EXAMPLE
+
+*** 格式化软盘
+*** 直接从设备上写入和读取数据
+	需使用dd命令，一般格式为：
+	#+BEGIN_EXAMPLE
+      dd if=input_file of=output_file [bs=block_size [count=blocks]]
+	#+END_EXAMPLE
+
+	*dd命令会提前清空目标文件中的所有内容。*
+
+	比如有2个U盘，挂载点分别为/dev/sdb和dev/sdc，将前一个U盘中的内容写
+	入后一个的命令为：
+	#+BEGIN_EXAMPLE
+      dd if=/dev/sdb of=/dev/sdc
+	#+END_EXAMPLE
+
+	或者可以将设备中的所有文件复制到本地：
+	#+BEGIN_EXAMPLE
+      dd if=/dev/sdb of=flash_drive.img
+	#+END_EXAMPLE
+
+*** 创建CD_ROM镜像文件
+	向光盘写入镜像文件分2步：
+	1. 创建与光盘文件系统相同的镜像文件。
+	2. 向光盘写入已有的镜像文件。
+
+**** 利用光盘创建镜像文件
+	 将光盘拷贝到本地备用，以将Ubuntu镜像光盘为例：
+	 #+BEGIN_EXAMPLE
+       dd if=/dev/cdrom of=ubuntu.iso
+	 #+END_EXAMPLE
+
+**** 利用本地文件创建镜像文件
+	 以将文件夹~/cd-rom-files中的文件夹复制到镜像文件cd-rom.iso为例：
+	 #+BEGIN_EXAMPLE
+       genisoimage -o cd-rom.iso -R -J ~/cd-rom-files
+	 #+END_EXAMPLE
+
+*** 写入CD_ROM镜像文件
+	有了镜像文件后，就可将其写入光盘等介质。
+**** 直接挂载镜像文件
+	 结合"-o loop"参数（以及-t iso9660参数）可将本地镜像文件像设备一样
+	 挂载到文件树上，以已有的image.iso镜像文件为例：
+	 #+BEGIN_EXAMPLE
+       mkdir /mnt/iso_image
+       mount -t iso9660 -o loop image.iso /mnt/iso_image
+	 #+END_EXAMPLE
+
+**** 清空可重写的CD-ROM
+	 使用wodim命令可清空一个可写的CD-ROM，blank参数表示执行速度：
+	 #+BEGIN_EXAMPLE
+       wodim dev=/dev/cdrw blank=fast
+	 #+END_EXAMPLE
+**** 写入镜像文件
+	 写入镜像文件也是使用wodim命令：
+	 #+BEGIN_EXAMPLE
+       wodim dev=/dev/cdrw image.iso
+	 #+END_EXAMPLE
+
+	 除dev参数外，还可设置-v参数提供verbose输出，以及用于商业保护的-dao参
+	 数，还有-tao参数（track-at-once）。
+
+*** md5sum
+	使用md5sum命令可查看iso文件和光盘介质的大小验证值：
+
+	检查iso文件的值：
+	#+BEGIN_EXAMPLE
+      md5sum image.iso
+      34e354760f9bb7fbf85c96f6a3f94ece image.iso
+	#+END_EXAMPLE
+
+	检查光盘介质的值：
+	#+BEGIN_EXAMPLE
+      md5sum /dev/cdrom
+      34e354760f9bb7fbf85c96f6a3f94ece /dev/cdrom
+	#+END_EXAMPLE
+
+** 网络
+   - *ping* ：向一个网络主机发生ICMP ECHO_REQUEST。
+   - *traceroute* ：
+   - *ip* ：
+   - *netstat* ：
+   - *ftp* ：传输网络文件。
+   - *wget* ：非交互式网络下载工具。
+   - *ssh* ：OpenSSH SSH客户端（远程登录程序）。
+
+*** 网络检查和侦测
+**** ping
+	 使用ping命令可向指定主机发送ICMP ECHO_REQUEST特殊请求（有的服务器
+	 可通过配置忽视此请求）。
+
+	 #+BEGIN_EXAMPLE
+       ping bing.com
+	 #+END_EXAMPLE
+
+	 使用C-c结束命令后，如果网络正常，会显示0% packet loss。
+
+**** traceroute
+	 显示访问指定主机需经过的网路：
+
+	 #+BEGIN_EXAMPLE
+       traceroute bing.com
+       traceroute to bing.com (13.107.21.200), 30 hops max, 60 byte packets
+           1  gateway (192.168.43.1)  2.094 ms  2.061 ms  2.096 ms
+           2  * 10.231.0.1 (10.231.0.1)  133.445 ms  133.570 ms
+           3  192.168.183.209 (192.168.183.209)  144.619 ms  144.832 ms  144.783 ms
+           4  192.168.52.245 (192.168.52.245)  144.760 ms  144.735 ms  144.718 ms
+           5  183.221.32.13 (183.221.32.13)  146.757 ms  146.897 ms  146.896 ms
+	 #+END_EXAMPLE
+
+	 从上例可看出，本机访问bing.com需经过5个网路。如果路由提供身份信息，
+	 可见其主机名、IP地址及性能数据；如果不提供则为星号。
+
+**** ip
+	 ip命令是一个多功能的网路配置工具，可完全利用现代Linux内核的网络功
+	 能。（是已废弃命令ifconfig的替代）
+
+	 如检查网络接口和"路由表（routing table）"：
+	 #+BEGIN_EXAMPLE
+       1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN
+       group default
+             link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+             inet 127.0.0.1/8 scope host lo
+                  valid_lft forever preferred_lft forever
+             inet6 ::1/128 scope host
+                   valid_lft forever preferred_lft forever
+       2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast
+       state UP group default qlen 1000
+             link/ether ac:22:0b:52:cf:84 brd ff:ff:ff:ff:ff:ff
+             inet 192.168.1.14/24 brd 192.168.1.255 scope global eth0
+                  valid_lft forever preferred_lft forever
+             inet6 fe80::ae22:bff:fe52:cf84/64 scope link
+                   valid_lft forever preferred_lft forever
+	 #+END_EXAMPLE
+*** 文件传输
+*** 远程安全交流
 * Writing Shell Scripts
