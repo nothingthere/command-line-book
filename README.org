@@ -1670,6 +1670,268 @@ remove：删除该用户的home文件夹和mail spool，但文件系统中的
              inet6 fe80::ae22:bff:fe52:cf84/64 scope link
                    valid_lft forever preferred_lft forever
 	 #+END_EXAMPLE
+
+	 从上面的结果可看出，测试系统有2个网络接口：
+	 1. lo (loopback interface)：系统用于与自己交流的虚拟接口。
+	 2. eth0(Ethernet interface)：以太网接口。
+
+	 在日常网络检测时的判断方法为：
+	 1. 每个接口第一行的"UP"表示接口成功连接。
+     2. “inet”项有正确的ip地址。如果使用的是DHCP(Dynamic Host
+        Configuration Protocol)，有效的IP地址表示DHCP正在工作。
+
+**** netstat
+	 netstat程序可查看许多网络配置和静态数据。使用"-ie"参数可查看本地
+	 网络接口（结果同"ip a"命令）。
+
+	 使用"-r"参数可显示内核的"路由表"，即显示网络间发送数据包是怎样配
+	 置的：
+
+	 #+BEGIN_EXAMPLE
+       Kernel IP routing table
+       Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+       default         gateway         0.0.0.0         UG        0 0          0 wlan0
+       192.168.1.0    0.0.0.0         255.255.255.0   U         0 0          0 wlan0
+	 #+END_EXAMPLE
+
+	 其他参数：
+     | -a     | 显示所有正监听和没监听的线程 |
+     | -l     | 仅显示正在监听的线程         |
+     | -p     | 显示线程所属的程序PID        |
+     | 。。。 |                              |
+
 *** 文件传输
+**** ftp
+	 以在ftp.cn.debian.org服务器上下载文件为例：
+	 #+BEGIN_EXAMPLE
+       ftp ftp.cn.debian.org
+	 #+END_EXAMPLE
+
+	 密码为"anonymous"，密码可不填。可使用的命令有：
+	 - ls：列出资源
+	 - cd：文件夹跳转
+	 - lcd：本地文件夹跳转
+	 - get：下载指定文件
+	 - bye：退出ftp程序
+**** wget
+	 支持http、ftp和https协议。可下载ftp文件，也可抓取网页（可递归抓取
+	 整个网页，使用"-r"参数）。如抓取bing的首页：
+	 #+BEGIN_EXAMPLE
+       wget bing.com
+	 #+END_EXAMPLE
+
 *** 远程安全交流
+	shh程序解决了rlogin和telnet两个程序的安全型问题。上2个程序同ftp程
+	序一样，传输所有内容（用户名和密码）时都用纯文本。
+**** ssh（Secure Shell）
+	 ssh程序解决安全问题的办法是：
+	 1. 远程主机需授权。
+	 2. 加密传输内容。
+
+	 SSH由两部分组成：SHH远程服务器上一直监听连接的22端口，连接远程主
+	 机的SSH客户端。（登录时可使用-p参数指定端口。）
+
+	 如需接受远程SSH连接，需安装openssh-server程序，且打开22端口接受连
+	 接。
+
+	 以远程主机remote-sys为例，ssh登录的命令为：
+	 #+BEGIN_EXAMPLE
+       ssh remote-sys
+	 #+END_EXAMPLE
+
+	 登录后，直到执行exit命令，才返回本地命令行。
+
+	 登录时如果远程主机用户名与当前用户名不同，也可指定用户名，如果有
+	 在remote-sys上的用户名bob，登录形式为：
+
+	 #+BEGIN_EXAMPLE
+       ssh bob@remote-sys
+	 #+END_EXAMPLE
+
+	 还可使用ssh程序在远程主机上执行单个命令：
+	 #+BEGIN_EXAMPLE
+       ssh remote-sys free
+	 #+END_EXAMPLE
+
+	 甚至可将在远程和本地重定向文件：
+	 #+BEGIN_EXAMPLE
+       ssh remote-sys 'ls *' > dirlist.txt
+	 #+END_EXAMPLE
+
+	 注意上例使用了单引号，目的是为了星号在远程主机上执行时膨胀，而不
+	 是本地。
+**** scp和sftp
+	 OpenSSH包含2个利用SSH机密机制传输文件的程序：
+	 1. scp (secure copy)。如复制remote-sys主机上home目录下的
+        document.txt文件到当前目录：
+		#+BEGIN_EXAMPLE
+          scp remote-sys:document.txt .
+		#+END_EXAMPLE
+
+		也可指定用户名：
+		#+BEGIN_EXAMPLE
+          scp bob@remote-sys:document.txt .
+		#+END_EXAMPLE
+
+	 2. sftp。与ftp程序极相似，使用方法也一样。不过使用的是SSH加密通道，
+        并且远程主机不需开启ftp服务。
+
+** 文件查找
+   - *locate* ：通过名称查找文件
+   - *find* ：在指定文件夹下查找文件
+   - *xargs* ：利用标准输入流构建命令
+   - *touch* ：改变文件时间状态
+   - *stat* ：显示文件或文件系统静态信息
+*** locate - 简单的文件查找工具
+	locate会搜索系统内包含指定字符串的文件，如已知所有程序文件都在bin
+	目录下，搜索有zip关键字的程序命令为：
+	#+BEGIN_EXAMPLE
+      locate bin/zip
+	#+END_EXAMPLE
+
+	复杂搜着可结合其他工具使用如grep：
+	#+BEGIN_EXAMPLE
+      locate zip | grep bin
+	#+END_EXAMPLE
+
+	如需使用正则匹配，可使用--regexp参数：
+	#+BEGIN_EXAMPLE
+      locate --regexp "html$" | grep home
+	#+END_EXAMPLE
+
+	locate查找文件依赖的是系统数据库，该数据库由updatedb程序创建，默认
+	每天执行一次，所有新创建的文件无法找到，可收到执行updatedb程序将新
+	创建的文件写入数据库。
+
+*** find - 复杂的文件查找工具
+	与locate程序不同，find程序需指定文件夹，再更加各种属性查找，且不依
+	赖数据库。比如查看home目录下有多少个文件：
+	#+BEGIN_EXAMPLE
+      find ~ | wc -l
+	#+END_EXAMPLE
+
+**** 过滤参数
+	 - 文件类型过滤，使用-type参数。如只查找文件夹：
+	   #+BEGIN_EXAMPLE
+         find ~ -type -d | wc -l
+	   #+END_EXAMPLE
+
+	   只查找文件：
+	   #+BEGIN_EXAMPLE
+         find ~ -type f | wc -l
+	   #+END_EXAMPLE
+
+	   可过滤的文件类型选项有：
+       | b | 块设备文件     |
+       | c | 字符型设备文件 |
+       | d | 文件夹         |
+       | f | 一般文件       |
+       | l | 软链接         |
+
+	 - 文件名过滤，使用-name参数。如结果中只包含png文件：
+	   #+BEGIN_EXAMPLE
+         find ~ -type -f -name ".png"
+	   #+END_EXAMPLE
+
+	 - 文件大小过滤，使用-size参数。如查找大小大于1Mb的png文件：
+	   #+BEGIN_EXAMPLE
+         find ~ -type -f -name "*.png" -size +1M
+	   #+END_EXAMPLE
+
+	   其他表示大小的符号为：
+       | b | 512byte，如过没指定符号，为默认 |
+       | c | byte                            |
+       | w | 2-byte                          |
+       | K | kb                              |
+       | M | Mb                              |
+       | G | 1024Mb                          |
+
+	   其中加号和减号表示大于和小于该值，如果省略表示为精确值。
+
+	 - 其他常用过滤参数：
+       | -cmin n        | n分钟前内容或属性修改的文件（精确值）        |
+       | -cnewer file   | 内容或属性比file后修改过的文件               |
+       | -ctime n       | n*24小时前修改内容或属性的文件               |
+       | -empty         | 空文件                                       |
+       | -group name    | group属于name（名称或ID）的文件              |
+       | -iname pattern | -name参数的不区分大小写版本                  |
+       | -inum n        | inode值为n的文件，对查找硬链接文件很有用     |
+       | -mmin n        | 仅内容n分钟前修改的文件                      |
+       | -mtime n       | 仅内容n*24小时前修改过的文件                 |
+       | -newer file    | 仅内容比file后修改的文件。可用于文件backup。 |
+       | -nouser        | 不属于任何用户的文件。可用于清除攻击文件。   |
+       | -nogroup       | 不属于某用户组的文件                         |
+       | -perm mode     | 权限为mode（可为8进制数或符号）的文件        |
+       | -samefile name | 与-inum相似。与name文件有相同inode值的文件   |
+       | -user name     | 属于name用户的文件                           |
+
+**** 逻辑判断
+	 以查找home目录下权限不为0600的文件，或权限不为0700的文件夹为例：
+	 #+BEGIN_SRC shell-script
+       find ~ \( -type f -not -perm 0600 \) -or \( -type f -not -perm -0700 \)
+	 #+END_SRC
+
+	 逻辑判断符有：
+     | -or  | 或 |
+     | -and | 且 |
+     | -not | 非 |
+
+	 使用括号分组，由于括号有特殊含义需转义。
+
+**** 内置操作
+	 完成搜索操作后，find程序定义了一些直接操作的参数：
+     | -delete | 删除搜索结果                     |
+     | -ls     | 使用相当于ls -dils的命令列出结果 |
+     | -print  | 打印结果的绝对路径。（默认行为） |
+     | -quit   | 一找到结果就退出                 |
+
+**** 定制操作
+	 执行定制命令的格式为：
+	 #+BEGIN_EXAMPLE
+       -exec 命令 {} ;
+	 #+END_EXAMPLE
+	 其中命令为需对搜索结果执行的命令。由于大括号和分号有特殊含义，需
+	 用引号包裹，如对搜索结果执行ls命令：
+	 #+BEGIN_SRC shell-script
+       find ~ -type f -name "*.txt" -exec ls '{}' ';'
+	 #+END_SRC
+
+	 花括号实际上表示的就是搜索结果。
+
+	 也可用-ok替代-exec，这样每次执行命令时都会询问：
+	 #+BEGIN_SRC shell-script
+       find ~ -type f -name "*.txt" -ok ls '{}' ';'
+	 #+END_SRC
+
+**** 提高操作效率
+	 使用-exec执行定制命令时，实际上会对搜索结果的每条分别执行命令，如
+	 需将结果作为整体执行命令，可将分号换为加号（无需引号包裹）：
+	 #+BEGIN_SRC shell-script
+       find ~ -type f -name "*.txt" -exec ls '{}' +
+	 #+END_SRC
+
+**** xargs
+	 xargs程序可将标准输入流转换为多个参数（an argument list）供其它命
+	 令使用。
+
+	 如将find的结果通过管道传递给xargs，再传递给其它程序：
+	 #+BEGIN_SRC shell-script
+       find ~ -type f -name "*.html" | xargs ls -l
+	 #+END_SRC
+
+	 由于Unix系统允许文件名中含空格（甚至是换行符）。对于此情况可在
+	 find程序执行时使用-print0控制输出，使用xargs时再配合--null参数使
+	 用：
+	 #+BEGIN_SRC shell-script
+       find ~ -iname "*.png" -print0 | xargs --null ls
+	 #+END_SRC
+
+**** 其它一些常用的参数
+     | -depth           | 搜索深度。如果有-delete操作会自动使用此参数                          |
+     | -maxdepth levels | 最大搜索深度。传递至以后的测试和操作                                 |
+     | -mindepth levels | 最小搜索深度。传递至以后的测试和操作                                 |
+     | -mount           | 不搜索挂载到其它文件系统下的文件                                     |
+     | -noleaf          | 让搜索过程不假设是在Unix环境而进行优化，对搜索Windos和CD-ROM文件有用 |
+
+** 归档和备份
 * Writing Shell Scripts
