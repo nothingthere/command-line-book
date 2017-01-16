@@ -1934,4 +1934,152 @@ remove：删除该用户的home文件夹和mail spool，但文件系统中的
      | -noleaf          | 让搜索过程不假设是在Unix环境而进行优化，对搜索Windos和CD-ROM文件有用 |
 
 ** 归档和备份
+   - *gzip* ：压缩/解压文件。
+   - *bzip2* ：“块排序（block sort）”文件压缩程序
+   - *tar* ：“磁带归档（tape archiving）”应用
+   - *zip* ：打包和压缩文件
+   - *rsync* ：远程同步文件
+*** 压缩
+	压缩分有损和无损2种，有损压缩一般应用于图片和音乐文件，系统管理时
+	一般使用无损压缩，所以本章介绍的压缩全是无损压缩。
+**** gzip
+	 gzip可压缩多个文件，压缩后的文件会替换掉原来的文件。对应的解压程
+	 序为gunzip。
+	 #+BEGIN_EXAMPLE
+       gzip emma.txt
+       gunzip emma.txt.gz
+	 #+END_EXAMPLE
+
+	 压缩后的文件名会在原文件名的基础上添加“.gz”后缀。且压缩后权限和时
+	 间状态不会修改。
+
+	 下面为gzip的一些常用参数：
+     | -c    | --stdout 或 --to-stdout      | 保留原文件，将压缩结果输出到标准输出流 |
+     | -d    | --decompress 或 --uncompress | 解压，相当于gunzip                     |
+     | -f    | --force                      | 即使已存在文件的压缩文件，仍强制压缩   |
+     | -h    | --help                       | 使用帮助                               |
+     | -l    | --list                       | 显示压缩文件的压缩信息                 |
+     | -r    | --recursive                  | 如果是文件夹，递归压缩                 |
+     | -t    | --test                       | 测试已压缩文件的兼容性                 |
+     | -v    | --verbose                    |                                        |
+     | -数字 | 1到9（默认为6）              | 压缩程度                               |
+	 使用“-数字”参数时，1和9分别可以--fast和--best替换。
+
+	 gzip还可从标准输入流中获取文本压缩：
+	 #+BEGIN_SRC shell-script
+       ls -l /etc | gzip foo.txt.gz
+	 #+END_SRC
+
+	 如果需查看压缩文件，可将gunzip程序配合-c参数使用：
+	 #+BEGIN_SRC shell-script
+       gunzip -c foo.txt.gz | less
+	 #+END_SRC
+
+	 也可使用gzip对应的cat版本zcat：
+	 #+BEGIN_SRC shell-script
+       zcat foo.txt.gz
+	 #+END_SRC
+
+	 还可使用zless程序：
+	 #+BEGIN_SRC shell-script
+       zless foo.txt.gz
+	 #+END_SRC
+**** bzip2
+	 bzip2程序的功能和使用参数基本上和gzip程序一样，使用了不同的算法，
+	 压缩率更高，不过压缩速度不如gzip。
+
+	 压缩文件添加的文件后缀名为“.bz2”。
+
+	 对应的解压程序为bunzip2，压缩文件查看程序为bzcat。
+
+	 还附带了bzip2recover程序，可尝试恢复损坏的.bz2文件。
+
+*** 归档
+	通常与文件压缩结合使用的时文件归档操作。归档可将多个文件绑定到一个
+	大文件中，一般用于系统备份，或者将旧数据打包后转移到长期存储设备上。
+**** tar
+	 tar为“tap archive”的缩写，可见是Unix系统中历史悠久且经典的文件打
+	 包命令。
+
+	 压缩后的文件后缀为.tar，如果是.tgz则表示经过gzip程序压缩。
+
+	 tar命令的参数成为mode（模式），参数前不带"-"符号。常用的一些模式
+	 如下：
+     | f | 指定生成文件/目标提取文件 |
+     | c | 创建文件包                |
+     | x | 提取文件包                |
+     | r | 向文件包追加文件          |
+     | t | 列出文件包中的文件        |
+
+	 与gzip和bzip2结合使用的模式：
+     | z | --gzip 或--gunzip或ungzip | 归档后使用gzip压缩文件包，或提取前使用gzip/gunzip解压 |
+     | j | --bzip2                   | 归档后使用bzip2压缩文件包，或提取前使用bzip2/bunzip2解压 |
+
+	 由于历史原因，tar命令使用与一般命令有不同之处，下面举例展示其使用
+	 方法。首先创建一个测试文件夹：
+	 #+BEGIN_SRC shell-script
+       mkdir -p playground/dir-{001..100}
+       touch playgrpund/dir-{001..100}/file-{A..Z}
+	 #+END_SRC
+
+	 mkdir的-p参数为如果父文件夹不存在，先创建父文件夹。
+
+	 将整个playground文件夹打包：
+	 #+BEGIN_SRC shell-script
+       tar cf playground.tar playground
+	 #+END_SRC
+
+	 tar命令除参数无需-符号外，参数还必须放在最前。
+
+	 列出文件夹使用tf模式，如需详细信息可添加v模式：
+	 #+BEGIN_SRC shell-script
+       tar tvf playground.tar
+	 #+END_SRC
+
+***** 路径问题（没怎么理解）
+	  下面将归档文件在新的文件夹中提取：
+	  #+BEGIN_SRC shell-script
+        mkdir foo
+        cd foo
+        tar xf playground ../playground
+	  #+END_SRC
+
+	  查看foo文件夹可见，提取后的playground文件夹，其中的文件结构与原
+	  来的文件夹完全相同。
+
+	  除超级用户外，提取后文件的所有权为执行提取的用户。
+
+	  tar归档文件时采用的是相对路径（即去除原文件名绝对路径前的斜杠）。
+	  下面用另一种方式归档文件，再在foo文件夹中提取：
+	  #+BEGIN_SRC shell-script
+        tar cfv playground2.tar ~/playground
+        cd foo
+        tar xvf ../playground2.tar
+	  #+END_SRC
+
+	  现在在foo文件夹中就会生成home目录，提取后的playground文件夹依然
+	  在里面。原有在于"~/playground"文件名会膨胀为
+	  “/home/claudio/playground”。
+
+	  #+BEGIN_QUOTE
+	  此节不怎么理解。到目前为止的理解是，如果要在提取文件后文件都为绝
+	  对路径，打包时就都应该使用绝对路径。
+	  #+END_QUOTE
+
+	  比如使用U盘将一台电脑上的home目录复制到另一台电脑：
+	  #+BEGIN_SRC shell-script
+        sudo tar cfv /media/U盘/home.tar /home
+        # 另一台电脑上的操作：
+        cd /
+        sudo tar xfv /media/U盘/home.tar
+	  #+END_SRC
+	  这里假设U盘挂载到了/media文件夹中的"U盘"文件夹上。需注意的是，提
+	  取前需将当前目录cd到根目录下。
+
+***** 提取单个文件
+***** 结合find使用
+***** 文件远程归档
+**** zip
+*** 文件同步
+**** 使用rsync同步远程文件
 * Writing Shell Scripts
