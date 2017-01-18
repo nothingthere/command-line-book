@@ -824,8 +824,7 @@
       对后台程序而言，实现重新初始化的效果。即，当后台程序接受此信号后，
       重启并重新读取其配置文件，Apache服务器就是使用如此使用HUP信号？。
 
-	- INIT（2）。Interrupt，与使用<kbd>Ctrc</kbd>效果相同，通常会总
-      之程序。
+	- INIT（2）。Interrupt，与使用<C-c>效果相同，通常会通知程序。
 
 	- KILL（9）。,Kill，是个特殊信号。由于不同程序处理信号的方式不同，
       如完全忽视，此信号实际上并不直接发送给目标程序，而是通过内核立即
@@ -838,8 +837,8 @@
 	- CONT（18）。Continue，恢复接收STOP信号后的进程。与使用
       <C-z>快捷键，在将其置于后台效果相同。
 
-	- STOP（19）。Stop，使进程暂停，效果如<kbd>Ctrz</kbd>快捷键。同
-      KILL信号一样，并不直接发送给目标进程，所以无法忽略。
+	- STOP（19）。Stop，使进程暂停，效果如<C-z>快捷键。同KILL信号一样，
+      并不直接发送给目标进程，所以无法忽略。
 
 	例：
 	#+BEGIN_EXAMPLE
@@ -869,15 +868,15 @@
 	- SEGV（11）。Segmentation Voilation，如果某程序非法使用内存，即尝
       试在不允许的文件写入数据时发送此信号。
 
-	- TSTP（20）。Terminal Stop。当<kbd>Ctrz</kbd>按下时命令行发出的
-      信号。不想STOP信号，程序接收到TSTP信号后，可选择忽略。
+	- TSTP（20）。Terminal Stop。当<C-z>按下时命令行发出的信号。不想
+      STOP信号，程序接收到TSTP信号后，可选择忽略。
 
 	- WINCH（28）。Window Change，当程序所在窗口缩放时，系统发出的信号。
       如top和less程序，接受到此信号后更改行为，以使用当前窗口大小。
 
 	查看所有kill可接受的选项使用l”选项：
 	#+BEGIN_EXAMPLE
-      me@ubuntu16.04:~$ killl
+      me@ubuntu16.04:~$ kill -l
 	#+END_EXAMPLE
 
 **** killall 向多个进程同时发送信号
@@ -909,7 +908,7 @@
 	- pstree：以树状形式列出进程，突出父进程和子进程关系。
 	- vmstat：显示系统资源使用概况，包括内存、交换分区和硬盘I/O（disk
       I/O）。如需实时更新，可在后面跟上间隔描述，如vmstat 5，结束使
-      用<kbd>Ctrc</kbd>命令。
+      用<C-c>命令。
 	- xload：使用图像界面实时绘制系统负载。
 	- tload：与xload功能相同，不过是在命令行绘制。
 
