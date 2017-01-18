@@ -1,4 +1,6 @@
 #+TITLE: 《The Command Line Book》学习笔记
+[[http://linuxcommand.org/tlcl.php/tlcl.php][书籍地址]]
+
 * Learning The Shell
 ** 初试Shell
    命令行打开快捷键： <kbd>Ctrl+Alt+T</kbd>
@@ -2077,9 +2079,183 @@ remove：删除该用户的home文件夹和mail spool，但文件系统中的
 	  取前需将当前目录cd到根目录下。
 
 ***** 提取单个文件
+	  在提取命令后添加文件名（路径需与打包文件中的路径完全相同），可实
+	  现提取一个或多个文件。
+
+	  如需支持wildcard还需结合--wildcards参数使用：
+	  #+BEGIN_SRC shell-script
+        tar xf ../playground2.tar --wildcards 'home/me/playground/dir-*/file-A'
+	  #+END_SRC
+
 ***** 结合find使用
+	  结合find使用可将一系列匹配的文件打包：
+	  #+BEGIN_SRC shell-script
+        find playground -name 'file-A' exec tar rf playground.tar '{}' '+'
+        # 或者
+        find playground -name 'file-A' | xargs tar rf playground.tar
+	  #+END_SRC
+
+	  使用此功能可通过timestamp文件，通过find命令的-newer参数不断备份
+	  文件。
+
+	  tar程序还可使用标准输入和输出流，如将find的结果归档后再压缩：
+	  #+BEGIN_SRC shell-script
+        find playground -type f -name 'file-A' | tar cf - --files-from=- | gzip > playgroundA.tgz
+	  #+END_SRC
+
+	  tar命令中的2个“-”表示标准输出/入流，会根据情况自动识别为标准输出
+	  流还是标准输入流。（“-”号的此用法在其他很多和程序中还会用到）。
+	  所以第一个"-"表示的是标准输出流，--files-from的值的“-”则是表示的
+	  标准输入流（--from-files= - 还可用-T - 替代）。
+
+	  经过gzip压缩后的打包文件后缀一般是.tgz，有时也用.tar.gz。
+
+	  在tar命令中使用z或j模式，可将打包后的文件再经gzip或bzip2程序压缩：
+	  #+BEGIN_SRC shell-script
+        # 打包后使用gzip压缩
+        find playground -type f -name 'file-A' | tar cfz playground.tgz -T -
+        # 打包后使用bzip2压缩
+        find playground -type f -name 'file-A' | tar cfj playground.tbz -T -
+	  #+END_SRC
+
 ***** 文件远程归档
+	  既然tar程序可使用管道，就可以结合ssh程序实现远程文件归档传输，如
+	  将远程主机上的Document文件夹打包压缩后发送到本地：
+	  #+BEGIN_SRC shell-script
+        # 本地文件夹
+        mkdir remote-suff
+        # 远程传输
+        cd remote-stuff
+        ssh remote-sys 'tar cf - Documents | gzip' | tar zxf -
+	  #+END_SRC
 **** zip
-*** 文件同步
-**** 使用rsync同步远程文件
+	 zip程序是一个同时打包和压缩工具。打包压缩后的文件后缀为.zip。
+
+	 zip的主要使用场景是兼容Windows系统。 *Unix上首选的压缩工具是gzip，
+	 其次是bzip2，最后才是zip。*
+
+	 zip程序的用法为：
+	 #+BEGIN_EXAMPLE
+       zip options zipfile file...
+	 #+END_EXAMPLE
+
+	 如将playground文件夹打包压缩：
+	 #+BEGIN_SRC shell-script
+       zip -r playground.zip playground
+	 #+END_SRC
+	 注意点：
+	 1. 打包压缩文件夹需使用-r(recursive)参数，否则只会打包压缩空的
+        playground文件夹。
+	 2. 执行程序过程中，如果仅是打包会显示"stored"文件，如果有压缩会显
+        示"deflat"文件，显示信息行末的百分数表示压缩量。
+
+	 解压zip文件使用unzip程序：
+	 #+BEGIN_SRC shell-script
+       cd foo
+       unzip ../playground.zip
+	 #+END_SRC
+	 注意点：
+	 1. 与tar命令相反，如果文件存在，unzip解压文件时会保留原有文件而不
+        是替换原有文件。
+	 2. 使用-l参数可查看打包文件中的文件详情，如需更详细信息，可添加-v
+        参数。不跟指定文件名（需为打包时的文名绝对路径）文件包中的所有
+        文件。
+
+	 zip程序也可使用标准输入/出流，不过不使用"-"标记，而是"-@"：
+	 #+BEGIN_SRC shell-script
+       find playground/ -name 'file-A' | zip -@ file-A.zip
+	 #+END_SRC
+	 注意：这时生成文件和原文件的顺序相反。
+
+	 zip可使用标准输出流，可用于接受其他程序的输出结果：
+	 #+BEGIN_SRC shell-script
+       ls etc/ | zip ls-etc.zip -
+	 #+END_SRC
+	 /这里为啥又使用“-”作为标准输入流，和上一个使用find的例子不一样？？
+	 ？:question:/
+
+	 而unzip程序只能使用标准输出流，不能使用标准输入流。这样以阻止结合
+	 zip和unzip通过网络复制文件。unzip使用参数-p可将结果输出到标准输出
+	 流：
+	 #+BEGIN_SRC shell-script
+       unzip -p ls-etc.zip | less
+	 #+END_SRC
+
+*** rsyn-文件同步
+	系统备份的策略之一就是将一个或多个文件夹在本地（如移动存储设备）或
+	远程同步。
+
+	比如在本地开发网站，需随时同步到远程服务器。在Unix环境中，适用于此
+	情景的首选程序是rsync（remote synchronous）。其原理为快速计算2个文
+	件夹的差异，复制尽量少的内容实现同步。与其他复制程序相比既高效又经
+	济。
+
+	使用方法为：
+	#+BEGIN_EXAMPLE
+      rsync options source destination
+	#+END_EXAMPLE
+	source和destination可为下面3类文件：
+	1. 本地文件/文件夹。
+	2. 以"[use@]host:path"形式存在的远程文件/文件夹。
+	3. 以"rsync://[user@]host[:port]/path"指定的远程rsync服务器。
+
+	注意：不支持远程对远程的文件同步。
+**** 本地同步
+	 下面举例展示使用rsync程序同步本地文件。首先删除foo文件夹中的内容：
+	 #+BEGIN_EXAMPLE
+       rm -rf foo/*
+       rsync -av playground foo
+       dir-100/
+       dir-100/file-A
+
+       ...
+
+       sent 7,494 bytes  received 2,323 bytes  19,634.00 bytes/sec
+       total size is 0  speedup is 0.00
+	 #+END_EXAMPLE
+	 - -a参数表示归档，即保证历遍文件夹中的所有文件，且保持文件属性不变。
+	 - -v参数为执行过程中显示详细信息。且在执行完毕后显示复制概况。
+
+	 再执行上一个命令：
+	 #+BEGIN_EXAMPLE
+       sending incremental file list
+
+       sent 3,283 bytes  received 112 bytes  6,790.00 bytes/sec
+       total size is 0  speedup is 0.00
+	 #+END_EXAMPLE
+	 此时不会列出任何文件，因为rsync侦测出没有文件需要复制。
+
+	 如果修改其中一个文件再执行上个命令：
+	 #+BEGIN_EXAMPLE
+       touch playground/file-A
+       rsync -av playground foo
+       sending incremental file list
+       dir-001/file-A
+
+       sent 3,336 bytes  received 135 bytes  6,942.00 bytes/sec
+       total size is 0  speedup is 0.00
+	 #+END_EXAMPLE
+	 这里rsync只侦测出一个文件有改动，所以只同步了它。如果改变了目标文
+	 件（即foo文件夹），同步时也会侦测出来。
+
+	 下面举一个实际点的例子。假设有一个U盘挂载到了/media/BigDisk上，将
+	 重要的系统文件同步到此文件夹中：
+	 #+BEGIN_SRC shell-script
+       mkdir /media/BigDisk/backup
+       sudo rsync -av --delete /etc /home /media/BigDisk/backup
+	 #+END_SRC
+	 这里首先创建了一个新文件夹，然后同步。
+
+	 --delete参数的含义为删除backup文件夹中存在，但在系统中不存在的文
+     件。首次备份可不使用，不过对以后的每次备份都很有用。
+
+	 如需经常使用此操作，可将其作为别名添加到.bashrc文件中：
+	 #+BEGIN_SRC shell-script
+       alias backup='sudo mkdir -p /media/BigDisk/backup && sudo rsync -av --delete /etc /home /media/BigDisk/backup'
+	 #+END_SRC
+
+	 mkdir程序使用-p参数时，既可以在没有父文件夹时创建，也可在文件夹已
+	 经存在的情况下不报错。上例就是用的第二个特性。
+
+**** 远程同步
 * Writing Shell Scripts
