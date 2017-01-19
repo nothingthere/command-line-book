@@ -2279,5 +2279,73 @@
           mkdir fedora-devel
           rsync -av --delete rsync://rsync.gtlib.gatech.edu/fedora-linux-core/development/i386/os fedora-devel
 		#+END_SRC
-		rsync://为协议名，rsync.gtlib.gatech.edu为主机名。
+		rsync://为协议名，rsync.gtlib.gatech.edu为主机名，为文件路径。
+
+** 正则表达式
+   在类Unix系统中，文本数据的角色相当重要。接下来的几章会学习文本处理
+   工具。不过需先学习正则表达式作为基础铺垫。
+
+   正则表达式可能是本书中最难理解的内容。不过其功能强大，越早掌握越好。
+*** 何为表达式
+	正则表达式是用符号表示文本模板的一种标记。许多命令行工具和编程语言
+	都支持正则表达式。不过，不同工具，不同编程语言中的正则表达式各有不
+	同。本章只介绍POSIX规范的正则，适用于绝大多数命令行工具。
+*** grep程序
+*** 元字符和普通字符
+*** 任意字符
+*** 锚字符
+*** 括号表达式（bracket expression）
+*** POSIX规范中的基本正则表达式和扩展正则表达式
+	[[http://www.infoq.com/cn/news/2011/07/regular-expressions-6-POSIX][阅读infoq上的文章总结：]]
+
+	#+BEGIN_QUOTE
+	常见的正则表达式都源于Perl，并衍生出了PCRE（Perl Compatible
+	Regular Expression），使用\d、\w和\s等记法是其主要特点。其它还有一
+	些流派，就比如本章讲解的POSIX。
+
+	POSIX规范
+
+	全称为Portable Operating System Interface for uniX，其实也是由一系
+	列规范构成。它由定义了BRE（Basic Regular Expression，基本正则表达
+	式）和ERE（Extended Regular Expression，扩展正则表达式）2大规范。
+
+	在兼容POSIX的Unix系统上，grep和egrep之类的工具都遵循POSIX规范，一
+	些数据库系统中的正则表达式也符合POSIX规范。
+
+	BRE
+
+	grep、vi、sed都属于BRE一派。语法比较怪异，元字符’(’、’)’、‘{’和‘}’
+	必须转义后才有特殊含义。所以“(a)b”只能匹配字符串“(a)b”而不是"ab"；
+	正则"a{1,2}"只能匹配字符串"a{1,2}"，只有“a\{1,2\}”才能匹配字符串a
+	或aa。
+
+	之所以这么麻烦，是因为这些工具诞生很早，当时正则表达式还在逐渐发展，
+	这些字符还没特殊含义；为了向后兼容，只能使用转义。而且有些功能还不
+	支持如量词'+'和'?'，反向引用'\1'，以及多选结构'...|...'。
+
+	如今，GNU已近对BRE进行了扩展，也支持'+'、'?'和'|'，不过需写
+	成'\+'、'\?'和'\|'。所有，GNU的grep等工具名义上属于BRE流，确切点说
+	应该为GNU BRE。
+
+	ERE
+
+	常用工具egrep和awk则属于ERE流派。不兼容BRE语法，自成一体。元字符不
+	需转义直接使用（使用反斜杠转以后反而会让元字符失去特殊含义）。所以
+	正则'(ab|cd)'就可匹配字符串'ab'或'cd'，量词'+'、'?'和'{m, n}'可直
+	接使用。ERE并没明确规定是否支持反向引用，单不少工具都支持'\1'和'\2'这
+	样的反向引用。
+
+	实际上GNU ERE只是个说法而已，它有的功能其实GNU BRE都有了，只是元字
+	符不需转义。
+
+	POSIX中的字符组
+
+	POSIX中，根据语言环境(locale)的不同(ANSII或Unicode)变化字符组含义。
+
+	locale是一组有关语言和文化的设定，如日期格式、货币币值和字符编码等。
+	#+END_QUOTE
+
+*** 多选
+*** 个数修饰字符
+*** 实践
 * Writing Shell Scripts
