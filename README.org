@@ -2262,4 +2262,22 @@
 	 经存在的情况下不报错。上例就是用的第二个特性。
 
 **** 远程同步
+	 rsync程序正真的优雅在于在网络间复制文件。毕竟其缩写为“REMOTE
+	 synchronous”。有2种方法使用rsync程序：
+
+	 1. 与另一台安装rsync和远程shell程序（如ssh）的计算机间复制文件。
+        比如将本地文件备份到远程计算机remote-sys上的/backup文件夹中：
+		#+BEGIN_SRC shell-script
+          sudo rsync -av --delete --rsh=ssh /etc/ /home/ /usr/local/ remote-sys:/backup
+		#+END_SRC
+		这里使用参数--rsh=ssh的目的是使rsync使用ssh作为远程shell。这样
+        就可以通过ssh加密通道传输文件。
+
+	 2. 使用rsync服务器同步文件。rsync可配置为后台程序，监听同步请求。
+        常用来镜像远程系统。比如同步Fedora系统仓库：
+		#+BEGIN_SRC shell-script
+          mkdir fedora-devel
+          rsync -av --delete rsync://rsync.gtlib.gatech.edu/fedora-linux-core/development/i386/os fedora-devel
+		#+END_SRC
+		rsync://为协议名，rsync.gtlib.gatech.edu为主机名。
 * Writing Shell Scripts
