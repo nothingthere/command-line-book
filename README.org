@@ -1464,6 +1464,7 @@
        ...
        /dev/sdb1        14G  548M   14G   4% /media/me/disk
        # /dev/sr0        594M  594M     0 100% /media/me/e-STUDIO Client
+	 me@ubuntu16.04:~$
 	 #+END_EXAMPLE
 
 	 *重启前，挂载的设备会一直有效。*
@@ -2291,6 +2292,58 @@
 	都支持正则表达式。不过，不同工具，不同编程语言中的正则表达式各有不
 	同。本章只介绍POSIX规范的正则，适用于绝大多数命令行工具。
 *** grep程序
+	grep为“global regular expression print”的缩写，可见与正则（以后都
+	用“正则”说“正则表达式”）的关系；即搜索文件中与正则匹配的文本，然后
+	输出该行。目前为止都是使用grep匹配特定文本：
+	#+BEGIN_SRC shell-script
+      ls /usr/bin/ | grep zip
+	#+END_SRC
+
+	grep的使用方法为：
+	#+BEGIN_EXAMPLE
+      grep [options] regex [file...]
+	#+END_EXAMPLE
+
+	以下为grep的一些常用参数：
+
+    | -i | --ignore-case         | 不区分大小写                       |
+    | -v | --invert-match        | 取反。打印不匹配的行               |
+    | -c | --count               | 只显示匹配数量                     |
+    | -l | --files-with-matches  | 显示包含匹配的文件名               |
+    | -L | --files-without-match | 显示不包含匹配的文件名             |
+    | -n | --line-number         | 显示匹配行在文件中的行数           |
+    | -h | --no-filename         | 搜索多个文件时，不显示默认的文件名 |
+
+	为展示grep的使用方法，下面创建一些文件来实验：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ ls /bin/ > dirlist-bin.txt
+      claudio@kali:~/foo$ ls /usr/bin/ > dirlist-usr-bin.txt
+      claudio@kali:~/foo$ ls /sbin/ > dirlist-sbin.txt
+      claudio@kali:~/foo$ ls /usr/sbin/ > dirlist-usr-sbin.txt
+      claudio@kali:~/foo$ ls dirlist*.txt
+      dirlist-bin.txt  dirlist-sbin.txt  dirlist-usr-bin.txt  dirlist-usr-sbin.txt
+	#+END_EXAMPLE
+
+	下面对这些文件搜索：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep bzip dirlist*.txt
+      dirlist-bin.txt:bzip2
+      dirlist-bin.txt:bzip2recover
+	#+END_EXAMPLE
+
+	如果只需查看有匹配的文件名，可使用参数-l：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -l bzip dirlist*.txt
+      dirlist-bin.txt
+	#+END_EXAMPLE
+
+	相反，查看不包含匹配的文件名使用-L参数：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -L bzip dirlist*.txt
+      dirlist-sbin.txt
+      dirlist-usr-bin.txt
+      dirlist-usr-sbin.txt
+	#+END_EXAMPLE
 *** 元字符和普通字符
 *** 任意字符
 *** 锚字符
