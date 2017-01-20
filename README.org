@@ -2316,30 +2316,30 @@
 
 	为展示grep的使用方法，下面创建一些文件来实验：
 	#+BEGIN_EXAMPLE
-      claudio@kali:~/foo$ ls /bin/ > dirlist-bin.txt
-      claudio@kali:~/foo$ ls /usr/bin/ > dirlist-usr-bin.txt
-      claudio@kali:~/foo$ ls /sbin/ > dirlist-sbin.txt
-      claudio@kali:~/foo$ ls /usr/sbin/ > dirlist-usr-sbin.txt
-      claudio@kali:~/foo$ ls dirlist*.txt
+      claudio@kali:$ ls /bin/ > dirlist-bin.txt
+      claudio@kali:$ ls /usr/bin/ > dirlist-usr-bin.txt
+      claudio@kali:$ ls /sbin/ > dirlist-sbin.txt
+      claudio@kali:$ ls /usr/sbin/ > dirlist-usr-sbin.txt
+      claudio@kali:$ ls dirlist*.txt
       dirlist-bin.txt  dirlist-sbin.txt  dirlist-usr-bin.txt  dirlist-usr-sbin.txt
 	#+END_EXAMPLE
 
 	下面对这些文件搜索：
 	#+BEGIN_EXAMPLE
-      claudio@kali:~/foo$ grep bzip dirlist*.txt
+      claudio@kali:$ grep bzip dirlist*.txt
       dirlist-bin.txt:bzip2
       dirlist-bin.txt:bzip2recover
 	#+END_EXAMPLE
 
 	如果只需查看有匹配的文件名，可使用参数-l：
 	#+BEGIN_EXAMPLE
-      claudio@kali:~/foo$ grep -l bzip dirlist*.txt
+      claudio@kali:$ grep -l bzip dirlist*.txt
       dirlist-bin.txt
 	#+END_EXAMPLE
 
 	相反，查看不包含匹配的文件名使用-L参数：
 	#+BEGIN_EXAMPLE
-      claudio@kali:~/foo$ grep -L bzip dirlist*.txt
+      claudio@kali:$ grep -L bzip dirlist*.txt
       dirlist-sbin.txt
       dirlist-usr-bin.txt
       dirlist-usr-sbin.txt
