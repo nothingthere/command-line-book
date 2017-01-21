@@ -2345,9 +2345,238 @@
       dirlist-usr-sbin.txt
 	#+END_EXAMPLE
 *** 元字符和普通字符
+	grep程序实际上使用的匹配（如上面的"bzip"）都是正则。上例中的“bzip”
+	表示文件中的含"bzip"这4个字符。
+
+	如“bzip”中的字符称为普通字符，元字符则有：
+	#+BEGIN_EXAMPLE
+      ^ $ . [ ] { } - ? * + ( ) | \
+	#+END_EXAMPLE
+
+	其中转义符'\'的作用是将元字符转义为普通字符。
+
+	*如果在shell中使用正则，元字符中的一些会膨胀，为避免这种情况使用时
+    需配合单引号或双引号使用。*
+
 *** 任意字符
+	使用元字符'.'可匹配该位置上的任意字符。如：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -h '.zip' dirlist*.txt
+      bunzip2
+      bzip2
+      bzip2recover
+      gunzip
+      gzip
+      fcrackzip
+      fcrackzipinfo
+      funzip
+      gpg-zip
+      p7zip
+      preunzip
+      prezip
+      prezip-bin
+      unzip
+      unzipsfx
+	#+END_EXAMPLE
+
+	注意点：
+	1. 并没有匹配"zip"，因为使用了点元字符后，该位置上需一个字符。
+	2. 也可匹配“.zip”，因为匹配任意字符也包括匹配点字符本身。
+
 *** 锚字符
+	插入符'^'和美元符'$'为锚字符，分别代表行首和行末。如匹配以"zip"开
+	头的行：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -h '^zip' dirlist*.txt
+      zip
+      zipcloak
+      zipdetails
+      zipgrep
+      zipinfo
+      zipnote
+      zipsplit
+      zip2john
+	#+END_EXAMPLE
+
+	匹配以"zip"结尾的行：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -h 'zip$' dirlist*.txt
+      gunzip
+      gzip
+      fcrackzip
+      funzip
+      gpg-zip
+      p7zip
+      preunzip
+      prezip
+      unzip
+      zip
+	#+END_EXAMPLE
+
+	可见上2例都匹配了"zip"，如需准确匹配一个文本可同时使用这2个锚字符：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -h '^zip$' dirlist*.txt
+      zip
+	#+END_EXAMPLE
+
+	正则'^$'表示首尾都无内容，即匹配空行。
+
 *** 括号表达式（bracket expression）
+	括号表达式可在该位置上匹配方括号中的任意一个字符，如匹配"bzip"或
+	"gzip"：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -h '[bg]zip' dirlist*.txt
+      bzip2
+      bzip2recover
+      gzip
+	#+END_EXAMPLE
+
+	括号表达式中的字符可为任意多个；且所有元字符都都失去特殊意义，成为
+	普通字符，只有2个例外：
+	1. 插入符'^'：表示取反。
+	2. '-'：表示范围。
+
+**** 取反
+	 如果方括号中的第一个字符为'^'则表示该位置上不包含其中字符的任意一
+	 个：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -h '[^bg]zip' dirlist*.txt
+       bunzip2
+       gunzip
+       fcrackzip
+       fcrackzipinfo
+       funzip
+       gpg-zip
+       p7zip
+       preunzip
+       prezip
+       prezip-bin
+       unzip
+       unzipsfx
+	 #+END_EXAMPLE
+
+	 注意点：
+	 - 没有匹配"zip"，因为即使排除字符，但也需该位置上有字符。
+	 - '^'只有是第一个字符才有取反的作用，如果在其他位置就是普通字符。
+
+**** 传统字符范围
+	 查看所有以大写字符开头的行：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -h '^[ABCDEFGHIJKLMNOPQRSTUVWXZY]' dirlist*.txt
+       ATR_analysis
+       BlindElephant.py
+       CAT
+       ...
+	 #+END_EXAMPLE
+
+	 但使用字符范围表达更简便：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -h '^[A-Z]' dirlist*.txt
+       ATR_analysis
+       BlindElephant.py
+       CAT
+       ...
+	 #+END_EXAMPLE
+
+	 也可同时指定多个范围，如过滤所有以字母和数字开始的行：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -h '^[A-Za-z0-9]' dirlist*.txt
+       ...
+	 #+END_EXAMPLE
+
+	 可见在方括号中，'-'会被特殊对待；需匹配'-'本身的一般做法是将其放
+	 在最前面：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -h '^[-AZ]' dirlist*.txt
+       ATR_analysis
+	 #+END_EXAMPLE
+
+**** POSIX字符类
+	 上面的传统字符范围简单高效，但并不是始终奏效。使用grep程序目前为
+	 止还没遇到问题，单使用其他程序时可能会碰到。
+
+	 如路径膨胀时通配符（wildcard）的用法和基本和正则相同，但如下例：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/sbin/[ABCDEFGHIJKLMNOPQRSTUVWXYZ]*
+       /usr/sbin/ModemManager  /usr/sbin/NetworkManager
+	 #+END_EXAMPLE
+
+	 可获取希望得到的结果，即显示所有以大写字母开头的行。但是：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/sbin/[A-Z]*
+       /usr/sbin/base64conv             /usr/sbin/inetmask                 /usr/sbin/samba_spnupdate
+       /usr/sbin/besside-ng             /usr/sbin/install-menu             /usr/sbin/samba_upgradedns
+       ...
+	 #+END_EXAMPLE
+
+	 出现此情况的原因在于环境字符编码问题。最初使用的ASCII码中字母排序
+	 为：
+	 #+BEGIN_EXAMPLE
+       ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+	 #+END_EXAMPLE
+
+	 而后来为了多语言支持，ASCII码从7位升到了8位，即从127个字符增加到
+	 了255个字符（即UTF-8）。使得字母排序变成了：
+	 #+BEGIN_EXAMPLE
+       aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+	 #+END_EXAMPLE
+
+	 这就解释了为何第二例中的结果为何从字母'b'开始。因为"[A-Z]"实际上
+	 是除字母'a'外的所有字母。
+
+	 POSIX标准为了兼容，通过 /locale/ 控制使用ASCII还是UTF_8。查看方法
+	 为：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo $LANG
+       en_US.UTF-8
+	 #+END_EXAMPLE
+
+	 查看locale的方法为：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ locale
+       LANG=en_US.UTF-8
+       LANGUAGE=
+       LC_CTYPE="en_US.UTF-8"
+       ...
+	 #+END_EXAMPLE
+
+	 所以，可通过$LANG变量设置是使用ASCII还是UTF-8。如果$LANG值为POSIX
+	 则使用ASCII。设置方法为：
+	 - 只在当前命令行会话中有效：
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ export LANG=POSIX
+	   #+END_EXAMPLE
+	   这样设置后，上面第一例就会输出希望的结果。
+	 - 永久保存则是在.bashrc中添加
+	   #+BEGIN_SRC shell-script
+         export LANG=POSIX
+	   #+END_SRC
+	   /这样会改变整个系统的字符编码为ASCII，需谨慎使用。/
+
+	 为解决直接上面问题，POSIX标准定义了相当于字符范围的“字符类”。如下：
+     | 字符类     | 含义                                                                 | ASCII等价值   |
+     |------------+----------------------------------------------------------------------+---------------|
+     | [:alnum:]  | 字母数字字符                                                         | [A-Za-z0-9]   |
+     | [:word:]   | 在[:alnum:]的基础上添加了字符下划线'_'                               |               |
+     | [:alpha:]  | 字母                                                                 | [A-Za-z]      |
+     | [:blank:]  | 空格和tab                                                            |               |
+     | [:cntrl:]  | ASCII控制符，ASCII码0-31和127                                        |               |
+     | [:digit:]  | 数字0-9                                                              |               |
+     | [:graph:]  | 可见字符，ASCII值33-126                                              |               |
+     | [:lower:]  | 小写字母                                                             |               |
+     | [:punct:]  | 标点字符                                                             |               |
+     | [:space:]  | 空白字符，包括空格、tab、carriage、newline、vertical tab 和form feed | [ \t\r\n\v\f] |
+     | [:upper:]  | 大写字母                                                             |               |
+     | [:xdigit:] | 表示16进制数的字符                                                   | [0-9A-Fa-f]   |
+
+	 利用上面的字符类，可将一开始的例子改写为：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/sbin/[[:upper:]]*
+       /usr/sbin/ModemManager  /usr/sbin/NetworkManager
+	 #+END_EXAMPLE
+
+	 /此处并不是正则，是膨胀，只是POSIX的字符类在正则和膨胀中都可以。/
+
 *** POSIX规范中的基本正则表达式和扩展正则表达式
 	[[http://www.infoq.com/cn/news/2011/07/regular-expressions-6-POSIX][阅读infoq上的文章总结：]]
 
@@ -2398,7 +2627,28 @@
 	locale是一组有关语言和文化的设定，如日期格式、货币币值和字符编码等。
 	#+END_QUOTE
 
+	在BRE中，除下面的字符外，都是普通字符：
+	#+BEGIN_EXAMPLE
+      ^ $ . [ ] *
+	#+END_EXAMPLE
+
+	ERE中添加了字符：
+	#+BEGIN_EXAMPLE
+      ( ) { } ? + |
+	#+END_EXAMPLE
+
+	在BRE中，字符'('、')'、'{'、'}'转义后被当做元字符；ERE中对任何元字
+	符转义都会使其变为普通字符。
+
+	如需使GNU grep程序支持ERE，可添加-E参数，也可使用程序egrep。
+
+	#+BEGIN_QUOTE
+	个人总结：
+	POSIX的字符类是讨论的字符范围，为ERE和BRE是讨论的元字符区别。两者
+	学分开思考，不然更懵。
+	#+END_QUOTE
 *** 多选
 *** 个数修饰字符
+
 *** 实践
 * Writing Shell Scripts
