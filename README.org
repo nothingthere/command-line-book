@@ -349,8 +349,8 @@
 **** 花括号膨胀 ${}
 	 可使用以逗号隔开的列表形式：
 	 #+BEGIN_EXAMPLE
-       me@ubuntu16.04:~$ echo Fron{A,B,CBack
-       FronBack FronBack FronBack
+       me@ubuntu16.04:~$ echo Front{A,B,C}Back
+       FrontBack FrontBack FrontBack
 	 #+END_EXAMPLE
 
 	 也可使用范围形式：
@@ -2649,6 +2649,201 @@
 	学分开思考，不然更懵。
 	#+END_QUOTE
 *** 多选
+	/下面都为ERE。/
+
+	括号表达式选择匹配单个字符，而多选可选择匹配多个字符。下面结合echo
+	和grep展示用法：
+
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ echo "AAA" | grep AAA
+      AAA
+      claudio@kali:~/foo$ echo "BBB" | grep AAA
+      claudio@kali:~/foo$
+	#+END_EXAMPLE
+
+	上例将echo的标准输出通过管道传递给grep，如果匹配则显示，不匹配则不
+	显示任何内容。
+
+	下面使用多选：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ echo "AAA" | grep -E 'AAA|BBB'
+      AAA
+      claudio@kali:~/foo$ echo "BBB" | grep -E 'AAA|BBB'
+      BBB
+      claudio@kali:~/foo$ echo "CCC" | grep -E 'AAA|BBB'
+      claudio@kali:~/foo$
+	#+END_EXAMPLE
+
+	上例中的“AAA|BBB”含义为匹配字符串"AAA"或字符串"BBB"。注意：
+	1. 多选为ERE的特性，所以grep使用了-E参数（也可使用egrep程序）。
+	2. 正则用引号包裹，避免竖线解释为管道。
+
+	如需与其他正则结合使用，将多选用括号包裹：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -Eh '^(bz|gz|zip)' dirlist*.txt
+	#+END_EXAMPLE
+	匹配以bz、gz或zip开始的行。
+
+	下例的含义为以bz开头或包含gz，或包含zip：
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ grep -Eh '^bz|gz|zip' dirlist*.txt
+	#+END_EXAMPLE
+
 *** 个数修饰字符
+**** ? - 匹配0次或1次
+	 以验证电话号码的格式为例，假设电话号码的格式为：
+	 #+BEGIN_EXAMPLE
+       (nnn) nnn-nnnn
+       nnn nnn-nnnn
+	 #+END_EXAMPLE
+
+	 则正则应为：
+	 #+BEGIN_EXAMPLE
+       ^\(?[0-9][0-9][0-9]\)? [0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]
+	 #+END_EXAMPLE
+
+	 由于这是ERE特性，所以括号需转义；使用问号表示有无括号都可。
+
+	 如以下例子：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "(555) 123-4567" | grep -E '^\(?[0-9][0-9][0-9]\)? [0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'
+       (555) 123-4567
+       claudio@kali:~/foo$ echo "555 123-4567" | grep -E '^\(?[0-9][0-9][0-9]\)? [0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'
+       555 123-4567
+       claudio@kali:~/foo$ echo "AAA 123-4567" | grep -E '^\(?[0-9][0-9][0-9]\)? [0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'
+       claudio@kali:~/foo$
+	 #+END_EXAMPLE
+**** * - 匹配任意次（包括0次）
+	 "?"是匹配0次或1次，而"*"也可匹配0次，但也可以是任意多次。
+
+	 假设一个英语句子是以大写字母开始，含任意多个大小写字母和空格，结尾为"."，则正则应为：
+	 #+BEGIN_EXAMPLE
+       [[:upper:]][[:upper:][:lower:] ]*\.
+	 #+END_EXAMPLE
+
+	 注意点：
+	 1. 字符类需与括号表达式一起使用，表示字符范围，所以"[:upper:]"还
+        需要中括号包裹。
+	 2. "."为元字符，需转义。
+
+	 例：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "This works." | grep -E '[[:upper:]][[:upper:][:lower:] ]*\.$'
+       This works.
+	 #+END_EXAMPLE
+
+**** + - 匹配至少1次
+	 需至少一个字符满足条件。
+
+	 下面为匹配用单个空格分开的多组由1个或多个字母组成的行：
+	 #+BEGIN_EXAMPLE
+       ^([[:alpha:]]+ ?)+$
+	 #+END_EXAMPLE
+
+	 如下例：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "This that" | grep -E '^([[:alpha:]]+ ?)+$'
+       This that
+       claudio@kali:~/foo$ echo "a b c" | grep -E '^([[:alpha:]]+ ?)+$'
+       a b c
+       claudio@kali:~/foo$ echo "a b 9" | grep -E '^([[:alpha:]]+ ?)+$'
+       claudio@kali:~/foo$ echo "abc  d" | grep -E '^([[:alpha:]]+ ?)+$'
+       claudio@kali:~/foo$
+	 #+END_EXAMPLE
+
+**** {} - 指定匹配次数
+
+     | 构成  | 含义    |
+     |-------+---------|
+     | {n}   | x==n    |
+     | {n,m} | n<=x<=m |
+     | {n,}  | x>=n    |
+     | {,m}  | x<=m    |
+
+	 可使用此特性将上面验证电话号码的正则改写为：
+	 #+BEGIN_EXAMPLE
+       ^\(?[0-9]{3}\)? [0-9]{3}-[0-9]{4}$
+	 #+END_EXAMPLE
+
+	 例：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "(555) 123-4567" | grep -E '^\(?[0-9]{3}\)? [0-9]{3}-[0-9]{4}$'
+       (555) 123-4567
+       claudio@kali:~/foo$ echo "555 123-4567" | grep -E '^\(?[0-9]{3}\)? [0-9]{3}-[0-9]{4}$'
+       555 123-4567
+       claudio@kali:~/foo$ echo "5555 123-4567" | grep -E '^\(?[0-9]{3}\)? [0-9]{3}-[0-9]{4}$'
+       claudio@kali:~/foo$
+	 #+END_EXAMPLE
+
 *** 实践
+**** 使用grep验证电话簿
+	 先使用下面的命令生成文件phonelist.txt，其中含格式不正确的电话随机
+	 电话号码：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ for i in {1..10} ; do echo "(${RANDOM:0:3}) ${RANDOM:0:3}-${RANDOM:0:4}" >> phonelist.txt;done
+       claudio@kali:~/foo$ cat phonelist.txt
+       (371) 361-658
+       (691) 631-9427
+       (162) 715-1189
+       (230) 595-1260
+       (211) 105-1102
+       (292) 254-7236
+       (763) 482-2078
+       (154) 204-1602
+       (201) 709-801
+       (311) 130-1071
+	 #+END_EXAMPLE
+
+	 下面使用grep结合-v参数查看不满足条件的电话号码：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ grep -Ev '^\([0-9]{3}\) [0-9]{3}-[0-9]{4}$' phonelist.txt
+       (371) 361-658
+       (201) 709-801
+	 #+END_EXAMPLE
+
+**** 使用find查找“丑陋”的文件名
+	 find结合-regex参数就可使用正则查找文件。不过需注意：对grep而言，
+	 只要单行内包含正则匹配的内容就可成功匹配；而find则是需要整行与正
+	 则匹配才能成功匹配。
+
+	 假设"丑陋"的文件名为有不是下列正则中的字符：
+	 #+BEGIN_EXAMPLE
+       [-_./0-9a-zA-Z]
+	 #+END_EXAMPLE
+
+	 这查找命令为：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ find . -regex '.*[^-_./0-9a-zA-Z].*'
+	 #+END_EXAMPLE
+
+	 由于find使用正则时需匹配整行，所以前后都用了".*"来匹配任意字符。
+
+**** 使用locate查找文件
+	 使用locate查找文件时，如果使用参数--regexp可支持BRE，使用--regex
+	 则支持ERE。
+
+	 下例为使用ERE查找路径中含bin/bz、bin/gz或bin/zip：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ locate --regex 'bin/(bz|gz|zip)'
+	 #+END_EXAMPLE
+
+**** 在less和vim中查找文本
+	 使用less阅读文件时，按下"/"就可输入正则进行查找。
+
+	 但在vim中，只支持BRE，所以上面匹配电话号码的正则应为：
+	 #+BEGIN_EXAMPLE
+       ([0-9]\{3\}) [0-9]\{3\}-[0-9]\{4\}
+	 #+END_EXAMPLE
+**** 使用zgrep在压缩文件中查找
+	 zgrep程序可实现对压缩文件进行查找。如查找系统文档中有包含"regex
+	 expression"或"regular expression"文本的手册文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:/usr/share/man/man1$ zgrep -El '(regex|regular) expression' *.gz
+       ag.1.gz
+       apropos.1.gz
+       ...
+	 #+END_EXAMPLE
+
+	 正则表达式还有一个称为"反向引用(back reference)"的特性，以后讨论。
+
 * Writing Shell Scripts
