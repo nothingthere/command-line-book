@@ -2846,4 +2846,71 @@
 
 	 正则表达式还有一个称为"反向引用(back reference)"的特性，以后讨论。
 
+** 文本处理
+   所有类Unix系统都强烈依赖文本文件存储数据。有许多文本处理工具也理所
+   当然。本章主要介绍文本拆分和合并命令，下一章主要介绍为方便阅读的文
+   本格式化和打印命令。
+
+   - *cat* ：合并文件，输出到标准输出流。
+   - *sort* ：排序文本文件。
+   - *uniq* ：显示（不）重复的行。
+   - *cut* ：移除每行中指定的区域。
+   - *past* ：合并文本中的各行。
+   - *join* ：合并文本中“域（field）”相同的行。
+   - *comm* ：逐行比较已排序文本中的每行。
+   - *diff* ：逐行比较文本。
+   - *patch* ：使用diff命令的结果改变原文件。
+   - *tr* ：转换或删除字符。
+   - *sed* ：过滤和转换文本的流编辑器。
+   - *aspell* ：交互式拼写检查。
+
+*** 文本用途分类
+	文本文件的主要用途分类：
+	1. 文档
+	2. 网页
+	3. Email
+	4. 打印输出
+	5. 程序源代码
+*** 复习以前学过的文本处理命令
+**** cat
+	 cat程序有许多参数，其中一个为-A。此参数可用来查看不可见的控制字符，
+	 最常用的是：
+
+	 1. 查看空格是tab还是空格键。
+	 2. 查看换行符是Unix的换行符，还是MS-DOS的换行符。
+
+	 下面使用cat程序在标准输输入流中输入tab，并且在行末输入空白字符，
+	 以<C-d>（end-of-file）结束输入：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cat > foo.txt
+               The quick brown fox jump over the lazy dog.
+	 #+END_EXAMPLE
+
+	 再用带参数-A的cat程序查看foo.txt文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo cat -A foo.txt
+       ^IThe quick brown fox jump over the lazy dog.      $
+	 #+END_EXAMPLE
+
+	 可见tab显示为"^I"；正真的行末为"$"，表明行末有空格。
+
+	 #+BEGIN_QUOTE
+	 MS-DOS文本和Unix文本
+
+	 Unix文本用linefeed（ASCII 10）字符作为换行符，DOS文本用carriage
+	 return字符（ASCII 13）作为换行符。使用cat带参数-A就可看出是哪种系
+	 统文本。
+
+	 使用dos2unix和unix2dos两个程序就可实现转换。
+	 #+END_QUOTE
+
+	 cat程序的另外2个常见参数：
+	 - -s：将多个空行显示为1个空行。
+	 - -n：显示行数。
+
+**** sort
+**** uniq
+*** 拆分和合并文本
+*** 文本比较
+*** 即时编辑
 * Writing Shell Scripts
