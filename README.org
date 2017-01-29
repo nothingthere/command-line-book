@@ -2909,7 +2909,260 @@
 	 - -n：显示行数。
 
 **** sort
+	 sort程序可排标准输入流，一个或多个文本，将排序结果输出到标准输出
+	 流。
+
+	 下面使用与上一节cat相同的方法将标准输入流中的文本排序后输出到文本
+	 内：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort > foo.txt
+       c
+       b
+       a
+       claudio@kali:~/foo$ cat foo.txt
+       a
+       b
+       c
+	 #+END_EXAMPLE
+
+	 sort可接受多个文件，可将多个文件排序后合并为一个文件。如将3个文
+	 件排序后合并为1个文件：
+	 #+BEGIN_EXAMPLE
+       sort file1.txt file2.txt file3.txt > final_sorted.txt
+	 #+END_EXAMPLE
+
+	 下面为sort的一些常用参数：
+
+     | 参数 | 全写                    | 含义                                       |
+     |------+-------------------------+--------------------------------------------|
+     | -b   | --ignore-leading-blanks | 默认情况下，从第一个字符开始排序整行       |
+     | -f   | --ignore-case           | 忽略大小写                                 |
+     | -n   | --numeric-sort          | 默认使用字母排序                           |
+     | -r   | --reverse               | 默认排序为从小到大                         |
+     | -k   | --key=filed1[,filed2]   | 基于field1到filed2间的文本排序             |
+     | -m   | --merge                 | 假设多个文件都已排序好，合并时不再单个排序 |
+     | -o   | --output=file           | 将排序结果输出到file，而非标准输出流       |
+     | -t   | --field-separate=char   | 默认各列间的间隔为一个（或多个）空格或tab  |
+
+	 上面的大多数参数较简单，但有些不然。首先，比如使用-n参数进行数字
+	 排序。使用du程序可查看文件大小：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ du -s /usr/share/* | head
+       48                  /usr/share/aclocal
+       8                   /usr/share/adduser
+       144                 /usr/share/adium
+       116                 /usr/share/aglfn
+       ...
+	 #+END_EXAMPLE
+
+	 下面使用sort的-n参数对du程序的结果进行排序：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ du -s /usr/share/* | sort -nr | head
+       768200              /usr/share/doc
+       693020              /usr/share/texlive
+       477856              /usr/share/locale
+       ...
+	 #+END_EXAMPLE
+
+	 但是如果程序结果中表示大小的fied不在第一列，如ls程序的结果。需配
+	 合-k参数一起使用（此处暂不考虑ls程序可实现按文件大小排序）：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls -l /usr/bin/ | head | sort -nr -k 5
+       -rwxr-xr-x 1 root root       52008 Dec  9 22:08 [
+       -rwxr-xr-x 1 root root       10392 Apr  7  2016 411toppm
+       -rwxr-xr-x 1 root root        2376 Aug 10  2013 0trace.sh
+       -rwxr-xr-x 1 root root          96 Jan  3 12:40 2to3-3.5
+       -rwxr-xr-x 1 root root          96 Dec 19 04:19 2to3-2.7
+       -rwxr-xr-x 1 root root          40 Nov 19 15:52 7zr
+       -rwxr-xr-x 1 root root          40 Nov 19 15:52 7za
+       -rwxr-xr-x 1 root root          39 Nov 19 15:52 7z
+       lrwxrwxrwx 1 root root           8 Dec 20 18:15 2to3 -> 2to3-2.7
+       total 515520
+	 #+END_EXAMPLE
+
+	 sort程序一般用于处理“表格式数据（tabular data）”，如上面的ls输出。
+	 如果将上面的表格类比于数据库，则每行为一条记录（record），一行内
+	 部由包含多个域（field），如文件属性、链接数量，文件名等。sort程序
+	 可处理单个域。即以数据库的形式来讲，可使用--key参数来排序单个或多
+	 个域(field)。如上例使用了-n和-r参数来将第5个域按数字逆序排序。
+
+	 参数-k有许多特点，但首先需了解sort如何定义域(field)，即key。如：
+	 #+BEGIN_EXAMPLE
+       William Shotts
+	 #+END_EXAMPLE
+
+	 sort默认有2个域，第一个含字符串：
+	 #+BEGIN_EXAMPLE
+       "William"
+	 #+END_EXAMPLE
+
+	 第2个含字符串：
+	 #+BEGIN_EXAMPLE
+       " Shotts"
+	 #+END_EXAMPLE
+
+	 即域之间用空格或tab隔开，且属于后面一个，并在排序时考虑。
+
+	 以下面包含2006-2008年3个流行的Linux发行版发行时间列表为例：
+	 #+BEGIN_EXAMPLE
+       SUSE    10.2    12/07/2006
+       Fedora  10      11/25/2008
+       SUSE    11.0    06/19/2008
+       Ubuntu  8.04    04/24/2008
+       Fedora  8       11/08/2007
+       SUSE    10.3    10/04/2007
+       Ubuntu  6.10    10/26/2006
+       Fedora  7       05/31/2007
+       Ubuntu  7.10    10/18/2007
+       Ubuntu  7.04    04/19/2007
+       SUSE    10.1    05/11/2006
+       Fedora  6       10/24/2006
+       Fedora  9       05/13/2008
+       Ubuntu  6.06    06/01/2006
+       Ubuntu  8.10    10/30/2008
+       Fedora  5       03/20/2006
+	 #+END_EXAMPLE
+
+	 存入文件distros.txt中。首先按默认的字母顺序排序：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort distros.txt
+       Fedora              10   11/25/2008
+       Fedora              5    03/20/2006
+       Fedora              6    10/24/2006
+       Fedora              7    05/31/2007
+       Fedora              8    11/08/2007
+       Fedora              9    05/13/2008
+       SUSE                10.1 05/11/2006
+       SUSE                10.2 12/07/2006
+       SUSE                10.3 10/04/2007
+       SUSE                11.0 06/19/2008
+       Ubuntu              6.06 06/01/2006
+       Ubuntu              6.10 10/26/2006
+       Ubuntu              7.04 04/19/2007
+       Ubuntu              7.10 10/18/2007
+       Ubuntu              8.04 04/24/2008
+       Ubuntu              8.10 10/30/2008
+	 #+END_EXAMPLE
+
+	 在第二列中，“10”排在了最前，原因为按字母顺序，"1"比"0"以外的数字
+	 都小。为解决这一问题，可在第一个域上使用字母排序，第二个域上使用
+	 数字排序。
+
+	 sort程序的-k参数可有多个，且后面跟的域值可范围。如果不指定范围，
+	 默认从起始点到行末：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort --key=1,1 --key=2n distros.txt
+       Fedora              5    03/20/2006
+       Fedora              6    10/24/2006
+       Fedora              7    05/31/2007
+       Fedora              8    11/08/2007
+       Fedora              9    05/13/2008
+       Fedora              10   11/25/2008
+       SUSE                10.1 05/11/2006
+       SUSE                10.2 12/07/2006
+       SUSE                10.3 10/04/2007
+       SUSE                11.0 06/19/2008
+       Ubuntu              6.06 06/01/2006
+       Ubuntu              6.10 10/26/2006
+       Ubuntu              7.04 04/19/2007
+       Ubuntu              7.10 10/18/2007
+       Ubuntu              8.04 04/24/2008
+       Ubuntu              8.10 10/30/2008
+	 #+END_EXAMPLE
+
+	 上面的参数可写成"-k 1,1 -k 2n"，域值范围后可跟改变排序的其他参数
+	 的缩写：
+	 1. b 忽略前面的空白字符
+	 2. n 按数字排序
+	 3. r 逆序排序
+
+	 还可在单个域中按字符位置排序，如对第3个域排序：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort -k 3.7nbr -k 3.1nbr -k 3.4nbr distros.txt
+       Fedora              10   11/25/2008
+       Ubuntu              8.10 10/30/2008
+       SUSE                11.0 06/19/2008
+       Fedora              9    05/13/2008
+       Ubuntu              8.04 04/24/2008
+       Fedora              8    11/08/2007
+       Ubuntu              7.10 10/18/2007
+       SUSE                10.3 10/04/2007
+       Fedora              7    05/31/2007
+       Ubuntu              7.04 04/19/2007
+       SUSE                10.2 12/07/2006
+       Ubuntu              6.10 10/26/2006
+       Fedora              6    10/24/2006
+       Ubuntu              6.06 06/01/2006
+       SUSE                10.1 05/11/2006
+       Fedora              5    03/20/2006
+	 #+END_EXAMPLE
+
+	 "3.7"表示第3个域中的第7个字符，由于忽略前置空白字符才能计算出年的
+	 起始位置是7，所以使用了b参数。
+
+	 一些文件并不以空白字符分割域，可用-t参数指定分割符号，如：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort -t ':' -k 3 /etc/passwd | head
+       root:x:0:0:root:/root:/bin/bash
+       claudio:x:1000:1000:,,,:/home/me:/bin/bash
+       systemd-timesync:x:100:102:systemd Time Synchronization,,,:/run/systemd:/bin/false
+       uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+       systemd-network:x:101:103:systemd Network Management,,,:/run/systemd/netif:/bin/false
+       systemd-resolve:x:102:104:systemd Resolver,,,:/run/systemd/resolve:/bin/false
+       systemd-bus-proxy:x:103:105:systemd Bus Proxy,,,:/run/systemd:/bin/false
+       _apt:x:104:65534::/nonexistent:/bin/false
+       mysql:x:105:109:MySQL Server,,,:/nonexistent:/bin/false
+       epmd:x:106:110::/var/run/epmd:/bin/false
+	 #+END_EXAMPLE
+
 **** uniq
+	 相比sort，uniq显得轻量一些，仅是删除重复行。一般与sort程序配合使
+	 用。
+
+	 GNU版本的sort程序有-u参数，可实现对排序后的重复行删除。
+
+	 下面创建用于测试foo.txt文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cat > foo.txt
+       a
+       b
+       c
+       a
+       b
+       c
+	 #+END_EXAMPLE
+
+	 如果现在使用uniq程序删除重复的行：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ uniq foo.txt
+       a
+       b
+       c
+       a
+       b
+       c
+	 #+END_EXAMPLE
+
+	 不会有任何效果。因为，仅删除相邻的重复行：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort foo.txt | uniq
+       a
+       b
+       c
+	 #+END_EXAMPLE
+
+	 下面为uniq的一些常用参数：
+
+     | 参数 | 描述                                                                   |
+     |------+------------------------------------------------------------------------|
+     | -c   | 列出重复行，并在前面标明重复次数                                       |
+     | -d   | 仅显示重复的行                                                         |
+     | -f n | 忽略前面n个域。同sort一样，域间也是用空格或tab分开，不过不可重置分隔符 |
+     | -i   | 忽略大小写                                                             |
+     | -s n | 忽略每行前n个字符                                                      |
+     | -u   | 仅显示不重复的行                                                               |
+
 *** 拆分和合并文本
 *** 文本比较
 *** 即时编辑
