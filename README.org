@@ -3164,6 +3164,163 @@
      | -u   | 仅显示不重复的行                                                               |
 
 *** 拆分和合并文本
+	下面介绍的3个命令都是用来分离合并文本列的。
+
+**** cut
+	 用于提取（表格式）文本中的列。
+
+     | 参数            | 描述                                                                      |
+     |-----------------+---------------------------------------------------------------------------|
+     | -c /char_list/  | /char-list/ 为单个或多个由数字组成，逗号隔开的范围                        |
+     | -f /field_list/ | /field_list/ 为单个或多个由数字组成的域，逗号隔开。 *域间默认间隔符为tab* |
+     | -d /delim_char/ | 如果存在-f参数，则使用 /delim_char/ 作为间隔符                            |
+     | --complement    | 提取除-c或/和-f参数指定的文本行                                           |
+
+	 使用cat配合-A参数查看distros.txt可见，该文本“干净”（只有tab作为间
+	 隔符），可直接使用-f参数提取：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cat -A distros.txt
+       SUSE^I10.2^I12/07/2006$
+       Fedora^I10^I11/25/2008$
+       SUSE^I11.0^I06/19/2008$
+       ...
+	 #+END_EXAMPLE
+
+	 使用-f参数提取时间所在的域：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cut -f 3 distros.txt
+       12/07/2006
+       11/25/2008
+       06/19/2008
+       ...
+	 #+END_EXAMPLE
+
+	 由于时间所在的域提取出来后，每行的长度都相等，所以可使用-c参数提
+	 取指定范围内的字符：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cut -f 3 distros.txt | cut -c 7-10
+       2006
+       2008
+       2008
+       ...
+	 #+END_EXAMPLE
+
+	 #+BEGIN_QUOTE
+	 如需将tab转换为空格，可使用expand命令。如：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ expand distros.txt | cut -c 23-
+       2006
+       2008
+       2008
+       ...
+	 #+END_EXAMPLE
+
+	 与之对应的unexpand命令可将空格转换为tab。
+	 #+END_QUOTE
+
+	 也可使用-d参数指定域间间隔符：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cut -d ':' -f 1 /etc/passwd | head
+       root
+       daemon
+       bin
+       ...
+	 #+END_EXAMPLE
+
+**** paste
+	 paste程序与cut程序刚好相反，将各个文件中的列合并到一起，输出到标
+	 准输出流。与cut相同，可接受多个文件或标准输入流。
+
+	 下面利用distros.txt文件演示其功能。首先还是将该文件按时间顺序排序：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sort -k 3.7nbr -k 3.1nbr -k 3.4nbr distros.txt > distros-by-date.txt
+	 #+END_EXAMPLE
+
+	 再将排序好的文件使用cut程序将第一和二列切割到新的文件中：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cut -f 1,2 distros-by-date.txt > distros-versions.txt
+       claudio@kali:~/foo$ cat -A distros-versions.txt
+       Fedora^I10$
+       Ubuntu^I8.10$
+       SUSE^I11.0$
+       Fedora^I9$
+	 #+END_EXAMPLE
+
+	 再将第三列切割到另外一个文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ paste distros-dates.txt distros-versions.txt
+       11/25/2008          Fedora                  10
+       10/30/2008          Ubuntu                  8.10
+       06/19/2008          SUSE                    11.0
+       05/13/2008          Fedora                  9
+       ...
+	 #+END_EXAMPLE
+
+**** join
+	 join也是合并文件，但与paste不同的是使用同"关系型数据库(relational
+	 database)"相同的原理合并，即将有相同field值的行合并。
+
+	 以关系型数据库为例，如下面的2条记录：
+	 #+BEGIN_EXAMPLE
+       CUSTNUM FNAME   LNAME
+       ======= =====   =====
+       4681934 John    Smith
+	 #+END_EXAMPLE
+
+	 和
+
+	 #+BEGIN_EXAMPLE
+       ORDERNUM    CUSTNUM QUAN    ITEM
+       ========    ======= ====    ====
+       1212134     4681934 1       Blue Widget
+	 #+END_EXAMPLE
+
+	 都有key值CUSTNUM，合并后得到新记录：
+
+	 #+BEGIN_EXAMPLE
+       ORDERNUM    CUSTNUM QUAN    ITEM
+       ========    ======= ====    ====
+       1212134            4681934 1       Blue Widget
+	 #+END_EXAMPLE
+
+	 下面用distros-by-date.txt文件作为演示。首先新建2个文件，分别含名
+	 称和版本号，都用时间列作为key值。
+
+	 先生成名称文件：
+	 #+BEGIN_EXAMPLE
+       cclaudio@kali:~/foo$ cut -f 1,1 distros-by-date.txt > distros-names.txt
+       claudio@kali:~/foo$ paste distros-dates.txt distros-names.txt > distros-key-names.txt
+       claudio@kali:~/foo$ head distros-key-names.txt
+       11/25/2008          Fedora
+       10/30/2008          Ubuntu
+       06/19/2008          SUSE
+       ...
+	 #+END_EXAMPLE
+
+	 再生成版本文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cut -f 2,2 distros-by-date.txt > distros-vernums.txt
+       claudio@kali:~/foo$ paste distros-dates.txt distros-vernums.txt > distros-key-vernums.txt
+       claudio@kali:~/foo$ head distros-key-vernums.txt
+       11/25/2008          10
+       10/30/2008          8.10
+       06/19/2008          11.0
+       ...
+	 #+END_EXAMPLE
+
+	 由于这2个文件都有相同的时间域，即可使用join合并：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ join distros-key-names.txt distros-key-vernums.txt  | cat -A
+       11/25/2008 Fedora 10$
+       10/30/2008 Ubuntu 8.10$
+       06/19/2008 SUSE 11.0$
+       ...
+	 #+END_EXAMPLE
+
+	 注意，最后生成的文件去除了原来的tab，而使用空格来作为分隔符。参看
+	 join的man手册详细了解。
+
 *** 文本比较
 *** 即时编辑
 * Writing Shell Scripts
