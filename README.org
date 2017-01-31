@@ -3281,7 +3281,7 @@
 	 #+BEGIN_EXAMPLE
        ORDERNUM    CUSTNUM QUAN    ITEM
        ========    ======= ====    ====
-       1212134            4681934 1       Blue Widget
+       1212134     4681934 1       Blue Widget
 	 #+END_EXAMPLE
 
 	 下面用distros-by-date.txt文件作为演示。首先新建2个文件，分别含名
@@ -3322,5 +3322,97 @@
 	 join的man手册详细了解。
 
 *** 文本比较
+	文件版本比较对系统管理员和软件开发者尤其重要。前者可将当前配置文件
+	与以前的配置文件比较，以诊断系统；后者可随时查看程序更改情况。
+**** comm
+	 comm程序可比较2个文件，显示相同和不同之处。为演示方便，先使用cat
+	 创建2个文件：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cat > file1.txt
+       a
+       b
+       c
+       d
+       claudio@kali:~/foo$ cat > file2.txt
+       b
+       c
+       d
+       e
+	 #+END_EXAMPLE
+
+	 再使用comm对比：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ comm file1.txt file2.txt
+       a
+                       b
+                       c
+                       d
+               e
+	 #+END_EXAMPLE
+
+	 可见，第一列为只有第一个文件才有的文本，第二列为只有第二个文件才
+	 有的文本，第三列为两个文件都有的文本。
+
+	 comm可使用参数-n（n为1或2或3），用来不显示上面对应的列数。如只显
+	 示两个文件都有的文本：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ comm -12 file1.txt file2.txt
+       b
+       c
+       d
+	 #+END_EXAMPLE
+
+**** diff
+	 与comm相似，diff可用于检测文件的不同。却是个更复杂的工具，可支持
+	 多种输出方式，并能单词处理大量文件。diff通常被软件开发者用来检查
+	 程序不同版本之间的差异，即具有文件夹递归检查的功能。
+
+	 diff一个常见的用法就是生成"diff文件（或patches）"，再使用patch程
+	 序实现文件不同版本的切换。
+
+	 如使用diff程序检查上面的2个文件：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ diff file1.txt file2.txt
+       1d0
+       < a
+       4a4
+       > e
+	 #+END_EXAMPLE
+
+	 可见，在默认的输出样式中，显示为将第一个文件转换为第二个文件的更
+	 改命令（change command）。下面为diff的更改命令解释：
+
+     | 更改  | 含义                                                               |
+     |-------+--------------------------------------------------------------------|
+     | r1ar2 | 将第二个文件中位置r2的文本行添加到第一个文件的r1位置               |
+     | r1cr2 | 将第一个文件r1位置的文本行更改为第二个文件r2文职的文本行           |
+     | r1dr2 | 删除第一个文件中r1位置的文本行，该文本行出现在第二个文本中的r2位置 |
+
+	 这种默认的输出样式并不常用。下面介绍2种常用的输出样式。
+
+	 第一个为“上下文格式（context format）”，使用参数-c：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ diff -c file1.txt file2.txt
+       *** file1.txt   2017-02-01 00:49:32.523987870 +0800
+       --- file2.txt   2017-02-01 00:49:40.451987636 +0800
+       ***************
+       *** 1,4 ****
+       - a
+         b
+         c
+         d
+       --- 1,4 ----
+         b
+         c
+         d
+       + e
+	 #+END_EXAMPLE
+
+**** patch
 *** 即时编辑
+
 * Writing Shell Scripts
