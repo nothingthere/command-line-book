@@ -2140,14 +2140,17 @@
 	 其次是bzip2，最后才是zip。*
 
 	 zip程序的用法为：
+
 	 #+BEGIN_EXAMPLE
        zip options zipfile file...
 	 #+END_EXAMPLE
 
 	 如将playground文件夹打包压缩：
+
 	 #+BEGIN_SRC shell-script
        zip -r playground.zip playground
 	 #+END_SRC
+
 	 注意点：
 	 1. 打包压缩文件夹需使用-r(recursive)参数，否则只会打包压缩空的
         playground文件夹。
@@ -2155,10 +2158,12 @@
         示"deflat"文件，显示信息行末的百分数表示压缩量。
 
 	 解压zip文件使用unzip程序：
+
 	 #+BEGIN_SRC shell-script
        cd foo
        unzip ../playground.zip
 	 #+END_SRC
+
 	 注意点：
 	 1. 与tar命令相反，如果文件存在，unzip解压文件时会保留原有文件而不
         是替换原有文件。
@@ -2167,21 +2172,26 @@
         文件。
 
 	 zip程序也可使用标准输入/出流，不过不使用"-"标记，而是"-@"：
+
 	 #+BEGIN_SRC shell-script
        find playground/ -name 'file-A' | zip -@ file-A.zip
 	 #+END_SRC
+
 	 注意：这时生成文件和原文件的顺序相反。
 
 	 zip可使用标准输出流，可用于接受其他程序的输出结果：
+
 	 #+BEGIN_SRC shell-script
        ls etc/ | zip ls-etc.zip -
 	 #+END_SRC
+
 	 /这里为啥又使用“-”作为标准输入流，和上一个使用find的例子不一样？？
 	 ？:question:/
 
 	 而unzip程序只能使用标准输出流，不能使用标准输入流。这样以阻止结合
 	 zip和unzip通过网络复制文件。unzip使用参数-p可将结果输出到标准输出
 	 流：
+
 	 #+BEGIN_SRC shell-script
        unzip -p ls-etc.zip | less
 	 #+END_SRC
@@ -2196,9 +2206,11 @@
 	济。
 
 	使用方法为：
+
 	#+BEGIN_EXAMPLE
       rsync options source destination
 	#+END_EXAMPLE
+
 	source和destination可为下面3类文件：
 	1. 本地文件/文件夹。
 	2. 以"[use@]host:path"形式存在的远程文件/文件夹。
@@ -2207,6 +2219,7 @@
 	注意：不支持远程对远程的文件同步。
 **** 本地同步
 	 下面举例展示使用rsync程序同步本地文件。首先删除foo文件夹中的内容：
+
 	 #+BEGIN_EXAMPLE
        rm -rf foo/*
        rsync -av playground foo
@@ -2218,16 +2231,19 @@
        sent 7,494 bytes  received 2,323 bytes  19,634.00 bytes/sec
        total size is 0  speedup is 0.00
 	 #+END_EXAMPLE
+
 	 - -a参数表示归档，即保证历遍文件夹中的所有文件，且保持文件属性不变。
 	 - -v参数为执行过程中显示详细信息。且在执行完毕后显示复制概况。
 
 	 再执行上一个命令：
+
 	 #+BEGIN_EXAMPLE
        sending incremental file list
 
        sent 3,283 bytes  received 112 bytes  6,790.00 bytes/sec
        total size is 0  speedup is 0.00
 	 #+END_EXAMPLE
+
 	 此时不会列出任何文件，因为rsync侦测出没有文件需要复制。
 
 	 如果修改其中一个文件再执行上个命令：
@@ -3217,6 +3233,7 @@
 	 #+END_EXAMPLE
 
 	 与之对应的unexpand命令可将空格转换为tab。
+
 	 #+END_QUOTE
 
 	 也可使用-d参数指定域间间隔符：
@@ -3374,6 +3391,7 @@
 	 序实现文件不同版本的切换。
 
 	 如使用diff程序检查上面的2个文件：
+
 	 #+BEGIN_EXAMPLE
        claudio@kali:~/foo$ diff file1.txt file2.txt
        1d0
@@ -3412,7 +3430,115 @@
        + e
 	 #+END_EXAMPLE
 
-**** patch
-*** 即时编辑
+	 显示内容的前2行为，用不同符号标记的2个文件名称，及其时间戳。此处
+	 标记的符号用在后面标记不同文件。
 
+	 后面2块文本中符号的含义为：
+
+     | 符号 | 含义                                         |
+     |------+----------------------------------------------|
+     | 空白 | 2个文本都相同                                |
+     | -    | 删除。在第一个文件中有，而第二个文件中没有   |
+     | +    | 添加。在第一个文件中没有，而在第二个文件中有 |
+     | \!   | 更改。在2个文件的对应位置都会显示            |
+
+	 第二种为“统一格式（unified form）”，使用参数-u：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ diff -u file1.txt file2.txt
+       --- file1.txt   2017-02-01 00:49:32.523987870 +0800
+       +++ file2.txt   2017-02-02 19:53:42.991966238 +0800
+       @@ -1,4 +1,4 @@
+       -a
+        b
+        c
+        d
+       +e
+	 #+END_EXAMPLE
+
+	 与第一种形式相同，都有2个文件的名称和时间戳。不过更简洁。“@@ -1,4
+	 +1,4 @@”表示在2个文件中有区别的文本的行数范围。
+
+	 正文中符号的含义为：
+
+     | 符号 | 含义                               |
+     |------+------------------------------------|
+     | 空白 | 两个文件都有此行                   |
+     | -    | 在第一个文件中有，第二个文件中没有 |
+     | +    | 在第二个文件有，第一个文件中没有   |
+
+**** patch
+	 使用patch程序，可利用diff的对比结果，更新文件。其优势为：
+
+	 1. 相比于整个文件，diff文件更小，传输更方便。
+	 2. diff文件可清晰显示文件间的差异，阅读方便。
+
+	 官方建议，生成diff文件的格式为：
+
+	 #+BEGIN_EXAMPLE
+       diff -Naur old_file new_file > diff_file
+	 #+END_EXAMPLE
+
+	 利用diff文件更新文件版本的格式为：
+
+	 #+BEGIN_EXAMPLE
+       patch < diff_file
+	 #+END_EXAMPLE
+
+	 此处并不需要指定目标文件，因为diff_file中已经有目标文件的信息。下
+	 面以将file1.txt文件更改为file2.txt文件为例：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ diff -Nuar file1.txt file2.txt > patchfile.txt
+       claudio@kali:~/foo$ patch < patchfile.txt
+       patching file file1.txt
+       claudio@kali:~/foo$ cat file1.txt
+       b
+       c
+       d
+       e
+	 #+END_EXAMPLE
+
+*** 即时编辑
+	通常使用编辑器编辑文本都是交互式，而及时编辑则是指使用单个命令同时
+	编辑多个文件。
+
+**** tr
+	 tr程序用于“直译（transliterate）”字符，相当于基于单个字符的查找替
+	 换，即转换字符。如将小写字母转换为大写字母：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "lowercase letters" | tr a-z A-Z
+       LOWERCASE LETTERS
+	 #+END_EXAMPLE
+
+	 tr接受标准输入，结果输出到标准输出。接受2组字符作为参数，参数可为
+	 下面3种形式：
+
+	 1. 枚举字符列表。如“ABCDEFGHIJKLMNOPQRSTUVWXYZ”。
+	 2. 字符范围。如“A-Z”。与正则一样，依赖于本地环境，谨慎使用。
+	 3. POSIX字符类。如“[:upper:]”
+
+	 大多数情况下2组字符长度应该相等，单第一组也可比第二组长，如：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "lowercase letter" | tr [:lower:] A
+       AAAAAAAAA AAAAAA
+	 #+END_EXAMPLE
+
+	 还可使用参数-d删除字符，如删除MS-DOS文本文件中的换行符：
+
+	 #+BEGIN_EXAMPLE
+       tr -d '\r' < dos_file > unix_file
+	 #+END_EXAMPLE
+
+	 可使用-s参数删除重复的字符，如：
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "aaabbbccc" | tr -s ab
+       abccc
+	 #+END_EXAMPLE
+
+**** sed
+
+**** aspell
 * Writing Shell Scripts
