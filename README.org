@@ -3928,6 +3928,27 @@
 
 	 默认只在逻辑页的body部分生成行号。
 
+	 下面为nl的常用参数：
+
+     | 参数        | 含义                                                 |
+     |-------------+------------------------------------------------------|
+     | -n /style/  | 将body的行号样式设置为 /style/，可为                 |
+     |             | a： 对所有行标记行号                                 |
+     |             | t（默认）：仅标记非空行                              |
+     |             | n：不标记行号                                        |
+     |             | pregexp：只标记匹配正则的行。如"pSUSE"               |
+     | -f /style/  | 将footer的行号样式设置为 /style/ 。默认为n（none）。 |
+     | -h /style/  | 将header的行号样式设置为 /style/ 。默认为n（none）。 |
+     | -i /number/ | ？？？                                               |
+     | -n /format/ | 行号格式：                                           |
+     |             | ln：左对齐，无前置0                                  |
+     |             | rn（默认）：右对齐，无前置0                          |
+     |             | rz：右对齐，有前置0                                  |
+     | -p          | 不在逻辑页最前重置行号？？？                         |
+     | -s /string/ | 将 /string/ 作为行号和正文的间隔符。默认为tab。      |
+     | -v /number/ | 将每个逻辑行的行号初始值设置为 /number/ 。默认为1。  |
+     | -w /width/  | 将行号所占宽度设置为 /width/ 。默认为6。             |
+
 	 尝试一下下面2个不同的命令，观察效果：
 
 	 #+BEGIN_EXAMPLE
@@ -3935,16 +3956,117 @@
        nl -w 3 -s ' '
 	 #+END_EXAMPLE
 
-	 下面为nl的常用参数：
-
-     | 参数       | 含义 |
-     |------------+------|
-     | -n /style/ |      |
-
 **** fold - 将每行折叠为指定宽度
+
+	 如：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "The quick brown fox jumped over the lazy dog." | fold -w 12
+       The quick br
+       own fox jump
+       ed over the
+       lazy dog.
+	 #+END_EXAMPLE
+
+	 参数-w指定折叠宽度，只能比原来窄。如需在合适的单词边界处折叠，需
+	 配合-s参数使用：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "The quick brown fox jumped over the lazy dog." | fold -w 12 -s
+       The quick
+       brown fox
+       jumped over
+       the lazy
+       dog.
+	 #+END_EXAMPLE
+
+	 默认宽度为80，即80个字符。
+
 **** fmt - 简单的文本格式工具
+
+	 fmt程序也用于折叠行，不过功能更强大。接受单/多个文件或标准输入流。
+	 基于段落折叠，可比原来窄，也可比原来宽。
+
+	 如下面的emma.txt文件：
+
+	 #+BEGIN_SRC text
+           Please take a look at the important information in this header.
+       We encourage you to keep this file on your own disk, keeping an
+       electronic path open for the next readers.  Do not remove this.
+	 #+END_SRC
+
+	 使用参数-w指定折叠宽度：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ fmt -w 70 emma.txt
+               Please take a look at the important information in this
+               header.
+       We encourage you to keep this file on your own disk, keeping an
+       electronic path open for the next readers.  Do not remove this.
+	 #+END_EXAMPLE
+
+	 fmt会保留原来的缩进，使用参数-c可修改此默认行为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ fmt -cw 70 emma.txt
+               Please take a look at the important information in this
+        We encourage you to keep this file on your own disk, keeping
+        electronic path open for the next readers.     Do not remove this.
+	 #+END_EXAMPLE
+
+	 常用的fmt参数：
+
+     | 参数        | 描述                                                       |
+     |-------------+------------------------------------------------------------|
+     | -c          | 保留段落中前2行的缩进，后面的行对齐这两行                  |
+     | -p /string/ | 仅格式化以 /string/ 开头的行。比如用于格式化源代码中的注释 |
+     | -s          | 只将长的行变短，不管比指定宽度窄的行。                     |
+     | -u          | 单词间保留1个空格，句子间保留2个空格。对格式化“对其”文本有用？？？。 |
+     | -w /width/  | 指定折叠宽度。                                                       |
+
 **** pr - 为打印格式化文本
+
+	 用于将文本分页。使用参数-w指定宽度，参数-l指定长度。如将文件
+	 distros.txt分页：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ pr -l 20 -w 65 distros.txt
+
+       2017-01-31 18:41                distros.txt                Page 1
+
+       SUSE    10.2    12/07/2006
+       Fedora  10      11/25/2008
+       Ubuntu  7.04    04/19/2007
+       ...
+
+       2017-01-31 18:41                distros.txt                Page 2
+
+       SUSE    10.1    05/11/2006
+       Fedora  6       10/24/2006
+       Fedora  9       05/13/2008
+       ...
+
+       claudio@kali:~/foo$
+	 #+END_EXAMPLE
+
+	 每页的页头都生成日期、文件名和页号。
+
+	 下章详细介绍此程序。
+
 **** printf - 格式化并输出文本
+
+	 为"print format"的缩写，起源于C语言，后被许多语言借用。bash中内置
+	 了printf命令。
+
+	 不能用管道，很少在命令行中使用，但在脚本中常用且重要。
+
+	 用法同C语言中几乎一样。如：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ printf "%d, %f, %o, %s, %x, %X\n" 380 380 380 380 380 380 38
+       380, 380.000000, 574, 380, 17c, 17C
+	 #+END_EXAMPLE
+
 *** 文件格式化系统
 **** groff
 
