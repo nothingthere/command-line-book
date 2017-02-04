@@ -3540,5 +3540,290 @@
 
 **** sed
 
+	 sed为“stream editor（流编辑器）”的缩写。即可编辑标准输入流，也可
+	 编辑单个/多个文件。
+
+	 可利用单个sed命令，也可使用含多个命令的脚本文件编辑。
+
+	 下面为最简单的形式：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "front" | sed 's/front/back/'
+       back
+	 #+END_EXAMPLE
+
+	 此处使用了sed的s命令（和vi相同）。所有命令都是单个字母，查找和替
+	 换内容间的间隔符任意，不非一定为斜线，如：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "font" | sed 's_front_back_'
+       font
+	 #+END_EXAMPLE
+
+	 大多数sed命令前都可跟地址，以指定操作的行，如果没有地址则表示操作
+	 所有行。如上例只有一行的文本：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ echo "front" | sed '1s/front/back/'
+       back
+       claudio@kali:~/foo$ echo "front" | sed '2s/front/back/'
+       front
+	 #+END_EXAMPLE
+
+	 sed地址表示方法：
+
+     | 地址        | 含义                            |
+     |-------------+---------------------------------|
+     | /n/         | 正整数。指定行                  |
+     | \$          | 最后一行                        |
+     | /regexp/    | POSIX的BRE正则表达式            |
+     | addr1,addr2 | 地址范围。可为上面3种的任何一种 |
+     | first~step  | 从first行开始，跳过step行       |
+     | addr1,+n    | addr1表示的行，以及后面的n行    |
+     | addr!       | 操作除addr行外的所有行          |
+
+	 /上表中的addr为前3种中的任意一种。/
+
+	 下面以distros.txt文件展示不同地址的用法：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sed -n '1,5p' distros.txt
+       SUSE    10.2    12/07/2006
+       Fedora  10      11/25/2008
+       SUSE    11.0    06/19/2008
+       Ubuntu  8.04    04/24/2008
+       Fedora  8       11/08/2007
+	 #+END_EXAMPLE
+
+	 p命令为打印匹配行，-n参数则是取消默认显示所有文本行。
+
+	 使用正则匹配行：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sed -n '/SUSE/p' distros.txt
+       SUSE    10.2    12/07/2006
+       SUSE    11.0    06/19/2008
+       SUSE    10.3    10/04/2007
+       SUSE    10.1    05/11/2006
+	 #+END_EXAMPLE
+
+	 显示不匹配正则的行：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sed -n '/SUSE/!p' distros.txt
+       Fedora  10      11/25/2008
+       Ubuntu  8.04    04/24/2008
+       Fedora  8       11/08/2007
+       ...
+	 #+END_EXAMPLE
+
+	 下面为sed的一些常用命令(参考自[[http://www.gnu.org/software/sed/manual/sed.html][GNU官网文档的sed页面]])：
+
+	 - q [exit-code] 退出sed，不再进行任何处理和输出：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ seq 3 | sed 2q
+         1
+         2
+	   #+END_EXAMPLE
+
+	   只接受单个地址。
+
+	 - d 删除匹配行（跳过改行）：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ seq 3 | sed 2d
+         1
+         3
+	   #+END_EXAMPLE
+
+	 - p 打印匹配行。通常与-n参数一起使用：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ seq 3 | sed -n 2p
+         2
+	   #+END_EXAMPLE
+
+	 - n。？？？
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ seq 6 | sed 'n;n;s/./x/'
+         1
+         2
+         x
+         4
+         5
+         x
+	   #+END_EXAMPLE
+
+	 - {commands}复合命令。对匹配结果进行多个操作。
+
+	   替换第二行后并打印：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ seq 3 | sed -n '2{s/2/X/ ; p}'
+         X
+	   #+END_EXAMPLE
+
+	 - s/regexp/replacement/ 查找替换。
+
+	   替换文本中，可使用&字符表示regexp匹配的文本。还可使用\1到\9作为
+       正则的反向引用。
+
+	   *使用-E参数可使用ERE正则，读写更方便。*
+
+	   比如转换distros.txt文件中的时间格式。使用-E参数的写法为：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ sed -E 's/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\3-\1-\2/' distros.txt
+         SUSE                10.2   2006-12-07
+         Fedora              10     2008-11-25
+         SUSE                11.0   2008-06-19
+         ...
+	   #+END_EXAMPLE
+
+	   不使用用-E参数则应写为：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ sed 's/\([0-9]\{2\}\)\/\([0-9]\{2\}\)\/\([0-9]\{4\}\)/\3-\1-\2/' distros.txt
+         SUSE                10.2                                                             2006-12-07
+         Fedora              10                                                               2008-11-25
+         SUSE                11.0                                                             2008-06-19
+         ...
+	   #+END_EXAMPLE
+
+	   此处使用了正则的反向引用功能。BRE支持，单ERE可能不支持（此处可
+       用）。
+
+	   s命令还可以使用flag，如g（global），默认只替换第一个匹配：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ echo "aaabbbccc" | sed 's/b/B/'
+         aaaBbbccc
+	   #+END_EXAMPLE
+
+	   使用g后可全局替换：
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ echo "aaabbbccc" | sed 's/b/B/g'
+         aaaBBBccc
+	   #+END_EXAMPLE
+
+	   使用i可实现不区分大小写。
+
+	   #+BEGIN_EXAMPLE
+         claudio@kali:~/foo$ echo "aaabbBccc" | sed 's/b/2/gi'
+         aaa222ccc
+	   #+END_EXAMPLE
+
+	 - y/set1/set2 直译。
+
+	   将字符组set1转换为set2。与tr程序不同，需set1和set2需相等。
+
+	 上面都是在单个命令中使用sed，也可结合-f参数使用sed脚本执行多个命
+	 令。如使用下面的sed脚本distros.sed：
+
+	 #+BEGIN_SRC text
+       # sed script to produce Linux distributions report
+
+       1i\
+       \
+       Linux Distributions Report\
+
+       s/\([0-9]\{2\}\)\/\([0-9]\{2\}\)\/\([0-9]\{4\}\)$/\3-\1-\2/
+       y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/
+	 #+END_SRC
+
+	 使用-f参数执行的结果为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sed -f distros.sed distros.txt
+
+       Linux Distributions Report
+
+       SUSE    10.2    2006-12-07
+       FEDORA  10      2008-11-25
+       SUSE    11.0    2008-06-19
+       ...
+	 #+END_EXAMPLE
+
+	 sed脚本中的3到6行的含义为使用sed的i命令插入文本。i命令有2种用法：
+
+	 1. i text
+
+		在指定行前插入文本：
+		#+BEGIN_EXAMPLE
+          claudio@kali:~/foo$ seq 3 | sed '2i hello'
+          1
+          hello
+          2
+          3
+		#+END_EXAMPLE
+
+	 2. i\
+		text
+
+		#+BEGIN_EXAMPLE
+          claudio@kali:~/foo$ seq 3 | sed '2i\
+          > hello'
+          1
+          hello
+          2
+          3
+		#+END_EXAMPLE
+
+		如果插入行需空白行，可在行末添加"\"表示行延续。此方法在shell脚
+        本中同样适用，上列可改写为：
+
+		#+BEGIN_EXAMPLE
+          claudio@kali:~/foo$ seq 3 | sed '2i\
+          > \
+          > hello\
+          > \
+          > '
+          1
+
+          hello
+
+          2
+          3
+		#+END_EXAMPLE
+
+		*"\"后不能有空格*
+
+	 脚本中最后一行使用了sed的y命令。此命令不支持字符范围（如[a-z]），
+	 也不支持POSIX的字符类，所以使用了枚举字符。
+
 **** aspell
+
+	 aspell程序可用于交互式检查文本文件，如普通文本、HTML、源代码、邮
+	 件等。基本使用方法为：
+
+	 #+BEGIN_EXAMPLE
+       aspell check textfile
+	 #+END_EXAMPLE
+
+	 如下例故意创建一个有拼写错误的文本，再使用apsell程序检查：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ cat > foo.txt
+       The quick brown fox jimped over the laxy dog.
+       claudio@kali:~/foo$ aspell check foo.txt
+       claudio@kali:~/foo$
+	 #+END_EXAMPLE
+
+	 根据交互式菜单修改即可。默认会生成原文件后跟".bak"后缀的备份文件，
+	 如需取消默认备份，可使用参数--dont-backup。
+
+	 使用下面的sed命令，可将文件改回：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ sed -i 's/lazy/laxy/; s/jumped/jimped/' foo.txt
+       claudio@kali:~/foo$ cat -A foo.txt
+       The quick brown fox jimped over the laxy dog.$
+	 #+END_EXAMPLE
+
+	 此处使用了sed的-i（in-place）参数，不输出结果，而是直接修改文件。
+	 还可看出同时使用了多个命令。
+
 * Writing Shell Scripts
