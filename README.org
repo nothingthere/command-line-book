@@ -4181,4 +4181,267 @@
 	 使用命令“ls /usr/bin/*[ [:alpha:] ]2[ [:alpha] ]*”查看。
 	 #+END_QUOTE
 
+** 打印
+
+   - *pr* ：为打印转换文本。
+   - *lpr* ：打印文件。
+   - *a2ps* ：在PostScript打印机上格式化文件。
+   - *lpstat* ：显示打印机状态信息。
+   - *lpq* ：显示打印机队列状态。
+   - *lprm* ：取消打印任务。
+
+*** 打印历史简介
+*** 使用Linux打印
+
+	现代Linux系统有2套打印程序套装：
+
+	1. CPUS（Common Unix Printing System）：提供打印驱动和打印任务管理。
+	   - 通过创建和操作打印队列（print queues）管理打印机。
+	   - 识别不同文件格式，转换为可打印形式。
+
+	2. Ghostscript（RIP）： Postscript解释器。
+
+*** 准备打印文本
+**** pr - 为打印转换文本文件
+
+	 pr程序可调整文本以适应打印宽度，还可设置页头和外边距。
+
+	 pr常用参数：
+
+     | 参数          | 描述                                                     |
+     |---------------+----------------------------------------------------------|
+     | +first[:last] | 指定打印页数，从first页开始，last页结束                  |
+     | -column       | 打印为几列。即一页上有几列                               |
+     | -a            | 默认为垂直排列。使用-a参数后水平排列                     |
+     | -d            | 行与行间添加空行                                         |
+     | -D "format"   | 将页头的时间显示格式设置为"format"，与date程序的格式相同 |
+     | -f            | 页与页间换行符使用DOS的换行符                            |
+     | -h "header"   | 将header作为页头中间的文本                               |
+     | -l /length/   | 每页长度（行数）设置为 /length/ 。默认为66行。           |
+     | -o /offset/   | 左外边距设置为offset这么多个字符宽度                     |
+     | -w /width/    | 设置宽度（字符数）为 /width/ 。默认为72。                |
+     | -n            | 显示行号                                                 |
+
+	 pr程序通常配合管道使用，如列出/usr/bin/文件夹内容，呈3列显示：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/bin/ | pr -3 -w 65 | head
+
+       2017-02-05 15:20                                           Page 1
+
+       [                     alsaucm               aspell-import
+       0trace.sh             amap                  assistant
+       2to3                  amap6                 atk6-address6
+       2to3-2.7              amapcrap              atk6-alive6
+       2to3-3.5              amidi                 atk6-covert_send6
+	 #+END_EXAMPLE
+
+*** 向打印机发送打印任务
+
+	由于历史原因，CUPS打印套装支持2套程序：Berkeley风格和System V风格。
+	前者使用lpr程序，后者使用lp程序打印，功能几乎相同，看个人喜好选择。
+
+	#+BEGIN_QUOTE
+	为学习方便，如果没有实体打印机，可尝试安装cups-pdf程序。使“打印机”
+	打印到PDF文件。使用此“打印机”打印的PDF文件默认生成到~/PDF文件夹内。
+	#+END_QUOTE
+
+**** lpr - 打印文件（Berkeley 风格）
+
+	 使用lpr程序，结合管道，可将文本传入打印机：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/bin/ | pr -3 | lpr
+	 #+END_EXAMPLE
+
+	 可使用-P参数指定打印机：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpr -p 打印机名
+	 #+END_EXAMPLE
+
+	 其中打印机名为下面命令运行结果的第一列：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpstat -a
+       PDF accepting requests since Sun 05 Feb 2017 03:58:41 PM CST
+	 #+END_EXAMPLE
+
+	 如上面结果的“PDF”。
+
+	 下面为lpr程序的常用参数：
+
+     | 参数         | 描述                                                       |
+     |--------------+------------------------------------------------------------|
+     | -# /number/  | 将打印份数设置为 /number/                                  |
+     | -p           | pretty print。在每页上方打印深色的页头，含时间、日期等信息 |
+     | -P /printer/ | 指定打印机，如果不指则为系统默认打印机                     |
+     | -r           | 打印完后删除原文件                                         |
+
+**** lp - 打印文件（System V 风格）
+
+	 同lpr程序，也可接受单/多个文件和标准输入流。不过支持更多的参数。
+	 下面为lp程序的常用参数：
+
+     | 参数                     | 描述                                                             |
+     |--------------------------+------------------------------------------------------------------|
+     | -d /printer/             | destination。指定打印机，缺省值为系统默认打印机                  |
+     | -n /number/              | 指定打印份数                                                     |
+     | -o landscape             | 垂直打印                                                         |
+     | -o fitplot               | 将文本内容缩放至适应页面大小。对打印JPEG文件很有用。             |
+     | -o scaling= /number/     | 按 /number/ 缩放文件。                                           |
+     |                          | 100为刚好为页面大小，小于则缩小，如果大于100则可能占多页         |
+     | -o cpi= /number/         | cpi为"characters per inch"的缩写，即每英寸字符数量。默认为10     |
+     | -o lpi= /numnber/        | lpi为“lines per inch”的缩写，即每英寸行数。默认为6               |
+     | -o page-top= /points/    | 设置页面外边距。单位为 /point/ （pt）。默认值为72。              |
+     | -o page-right= /points/  |                                                                  |
+     | -o page-bottom= /points/ |                                                                  |
+     | -o page-left= /points/   |                                                                  |
+     | -P 页号                  | 指定只打印的实际纸张页。页号为用逗号隔开的字符串，如"1,3,5,7-10" |
+
+	 下面的命令为将/usr/bin中文件清单打印为4列，12CPI、8LPI，左外边距
+	 36pt：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/bin/ | pr -4 -w 90 -l 88 | lp -o page-left=36 -o cpi=12 -o lpi=8
+	 #+END_EXAMPLE
+
+**** 另一种选择：a2ps
+
+	 从名称看，a2ps程序为格式转换工具，单不止。其名称原来的含义为
+	 “ASCII to PostScript”，原用来为PostScript打印机格式化文本文件。进
+	 过多年发展后，此程序个将任何文本转换为PostScript文件，即“Anything
+	 to PostScript”。
+
+	 实际上是个打印程序，默认输出到系统默认打印机，而非标准输出流。
+
+	 如下使用a2ps程序创建一个PostScript文件：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/bin/ | pr -3 -t | a2ps -L 66 -o ~/Desktop/ls.ps
+       [stdin (plain): 18 pages on 9 sheets]
+       [Total: 18 pages on 9 sheets] saved into the file `/home/claudio/Desktop/ls.ps'
+	 #+END_EXAMPLE
+
+	 pr程序参数-t的含义为不显示页头和页尾。a2ps程序中，参数-L的含义为
+	 每页的行数，-o参数用来指定输出文件名称。
+
+	 使用evince查看ls.ps文件可见，“每张纸”上打印了2页，且添加了页头页
+	 尾，即默认美化打印（pretty print）。
+
+	 直接打印也是将输出文件默认输出到~/PDF文件夹内：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls /usr/bin/ | a2ps
+       [stdin (plain): 57 pages on 29 sheets]
+       request id is PDF-58 (0 file(s))
+       [Total: 57 pages on 29 sheets] sent to the default printer
+	 #+END_EXAMPLE
+
+	 下面为a2ps程序的部分参数：
+
+     | 参数                       | 描述                             |
+     |----------------------------+----------------------------------|
+     | --center-title= /text/     | 将每页中间的标题打印为 /text/    |
+     | --footer= /text/           | 页尾文本设置为 /text/            |
+     | --guess                    | 显示原文件的类型。               |
+     | --left-footer= /text/      | 将页面左下角文本设置为 /text/    |
+     | --left-title= /text/       | 页面左上角文本设置为 /text/      |
+     | --line-numbers= /interval/ |                                  |
+     | --list=defaults            | 显示默认设置                     |
+     | --list= /topic/            | 显示 /topic/ 的设置。？？？      |
+     | --pages= /range/           | 只打印的页数范围。               |
+     | --right-footer= /text/     | 右下角文本设置为 /text/          |
+     | --right-title= /text/      | 右上角文本设置为 /text/          |
+     | --rows= /number/           | 每页行数。默认为1                |
+     | -B                         | 不打印页头                       |
+     | -b /text/                  | ？？？                           |
+     | -f /size/                  | 字体大小，单位为pt               |
+     | -l /number/                | 每行字符数量                     |
+     | -L /number/                | 每页行数                         |
+     | -M /name/                  | 纸张规格，如“A4”                 |
+     | -n /number/                | 份数                             |
+     | -o /file/                  | 输出文件。"-"表示标准输出流      |
+     | -P /printer/               | 指定打印机。默认为系统默认打印机 |
+     | -R                         | ？？？                           |
+     | -r                         | ？？？                           |
+     | -T /number/                | ？？？                           |
+     | -u /text/                  | 水印                             |
+
+*** 监视和控制打印任务
+**** lpstat - 显示打印系统状态
+
+	 使用lpstat程序可查看可用的打印设备，以及打印设备的状态。比如只有
+	 一个虚拟打印机状态下打印机查看结果为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpstat -a
+       PDF accepting requests since Sun 05 Feb 2017 05:50:18 PM CST
+	 #+END_EXAMPLE
+
+	 查看打印机详细配置信息的命令为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpstat -s
+       system default destination: PDF
+       device for PDF: cups-pdf:/
+	 #+END_EXAMPLE
+
+	 可见系统的默认“打印机”为PDF（虚拟）打印机，其连接的设备为cusp-pdf
+	 程序。
+
+	 下面为lpstat程序的常用参数：
+
+     | 参数            | 描述                                               |
+     |-----------------+----------------------------------------------------|
+     | -a [printer...] | 查看打印机printer的打印队列。                      |
+     |                 | 只是打印机的任务序列，而不是物理打印机的任务序列。 |
+     |                 | 如果不指定具体打印机，则显示所有打印机的任务序列。 |
+     | -d              | 显示系统的默认打印机。                             |
+     | -r              | 显示打印服务器的状态信息。                         |
+     | -s              | 显示概况                                           |
+     | -t              | 显示所有打印机信息                                 |
+
+**** lpq - 显示打印机队列状态
+
+	 lpq程序可查看打印机的打印序列状态。比如内有打印任务时，执行的结果
+	 为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpq
+       PDF is ready
+       no entries
+	 #+END_EXAMPLE
+
+	 如果没指定某个打印机（使用-P参数），显示系统默认打印机的打印序列。
+
+	 如果打印机正在执行任务，执行效果为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lp emma.txt
+       request id is PDF-92 (1 file(s))
+       claudio@kali:~/foo$ lpq
+       PDF is ready and printing
+       Rank    Owner   Job     File(s)                         Total Size
+       active  claudio 92      emma.txt                        915456 bytes
+	 #+END_EXAMPLE
+
+**** lprm/cancel - 取消打印任务
+
+	 CUPS有2个取消打印任务的程序，一个是Berkeley风格的lprm程序，一个是
+	 System V风格的cancel程序。两者功能基本相同，参数只是稍有区别。
+
+	 使用上例中的执行结果取消打印任务：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ lpq
+       PDF is ready and printing
+       Rank    Owner   Job     File(s)                         Total Size
+       active  claudio 92      emma.txt                        915456 bytes
+       claudio@kali:~/foo$ cancel 93
+       claudio@kali:~/foo$ lpq
+       PDF is ready
+       no entries
+	 #+END_EXAMPLE
+
 * Writing Shell Scripts
