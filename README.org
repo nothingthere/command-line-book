@@ -4553,7 +4553,113 @@
 
 	 #+END_QUOTE
 **** 查看源文件树
+
+	 查看该程序中包含的文件：
+
+	 #+BEGIN_EXAMPLE
+      claudio@kali:~/src$ cd diction-1.11/
+      claudio@kali:~/src/diction-1.11$ ls
+      config.guess  COPYING       diction.pot      en_GB      getopt_int.h  misc.h  sentence.c
+      config.h.in   de            diction.spec     en_GB.po   INSTALL       NEWS    sentence.h
+      config.sub    de.po         diction.spec.in  getopt1.c  install-sh    nl      style.1.in
+      configure     diction.1.in  diction.texi.in  getopt.c   Makefile.in   nl.po   style.c
+      configure.in  diction.c     en               getopt.h   misc.c        README  test
+	 #+END_EXAMPLE
+
+	 GNU的软件源文件一般都包含README、INSTALL、NEW和COPYRIGHT文件，用
+	 来描述程序，以及如何安装、构建和版权信息。建议在构建程序前仔细阅
+	 读README和INSTALL两个文件。
+
 **** 构建（build）程序
+
+	 运行configure文件：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/src/diction-1.11$ ./configure
+       checking build system type... x86_64-unknown-linux-gnu
+       checking host system type... x86_64-unknown-linux-gnu
+       checking for gcc... gcc
+       checking for C compiler default output file name... a.out
+       checking whether the C compiler works... yes
+       checking whether we are cross compiling... no
+       checking for suffix of executables...
+       checking for suffix of object files... o
+       checking whether we are using the GNU C compiler... yes
+       checking whether gcc accepts -g... yes
+       checking for gcc option to accept ISO C89... none needed
+       checking for a BSD-compatible install... /usr/bin/install -c
+       checking for strerror... yes
+       checking for library containing regcomp... none required
+       checking for broken realloc... no
+       checking for msgfmt... no
+       configure: creating ./config.status
+       config.status: creating Makefile
+       config.status: creating diction.1
+       config.status: creating diction.texi
+       config.status: creating diction.spec
+       config.status: creating style.1
+       config.status: creating test/rundiction
+       config.status: creating config.h
+	 #+END_EXAMPLE
+
+	 此shell脚本文件会根据本地环境生成编译所需文件，以及Makefile以便使
+	 用make程序编译。最重要的是运行configure文件时不报错。
+
+	 再执行make程序：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/src/diction-1.11$ make
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common diction.c
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common sentence.
+       c
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common misc.c
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common getopt.c
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common getopt1.c
+       gcc -o diction -g diction.o sentence.o misc.o \
+               getopt.o getopt1.o
+       gcc -c -I. -DSHAREDIR=\"/usr/local/share\" -DLOCALEDIR=\"/usr/local/share/locale\" -g -O2 -pipe -Wno-unused -
+       Wshadow -Wbad-function-cast -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wcast-qual -Wpointer-arith
+        -Wcast-align -Wwrite-strings -Wmissing-declarations -Wnested-externs -Wundef -pedantic -fno-common style.c
+       gcc -o style -g style.o sentence.o misc.o \
+               getopt.o getopt1.o -lm
+	 #+END_EXAMPLE
+
 **** 安装程序
+
+	 安装该程序：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/src/diction-1.11$ sudo make install
+       [sudo] password for claudio:
+       [ -d /usr/local/bin ] || /usr/bin/install -c -m 755 -d /usr/local/bin
+       /usr/bin/install -c diction /usr/local/bin/diction
+       /usr/bin/install -c style /usr/local/bin/style
+       /usr/bin/install -c -m 755 -d /usr/local/share/diction
+       /usr/bin/install -c -m 644 ./de /usr/local/share/diction/de
+       /usr/bin/install -c -m 644 ./en /usr/local/share/diction/en
+       (cd /usr/local/share/diction; rm -f C; ln en C)
+       /usr/bin/install -c -m 644 ./en_GB /usr/local/share/diction/en_GB
+       /usr/bin/install -c -m 644 ./nl /usr/local/share/diction/nl
+       [ -d /usr/local/share/man/man1 ] || /usr/bin/install -c -m 755 -d /usr/local/share/man/man1
+       /usr/bin/install -c -m 644 diction.1 /usr/local/share/man/man1/diction.1
+       /usr/bin/install -c -m 644 style.1 /usr/local/share/man/man1/style.1
+       make install-po-no
+       make[1]: Entering directory '/home/claudio/src/diction-1.11'
+       make[1]: Nothing to be done for 'install-po-no'.
+       make[1]: Leaving directory '/home/claudio/src/diction-1.11'
+       claudio@kali:~/src/diction-1.11$ which diction
+       /usr/local/bin/diction
+	 #+END_EXAMPLE
+
 *** [[http://www.gnu.org/software/make/manual/html_node/index.html][make手册（不为原书内容）]]
 * Writing Shell Scripts
