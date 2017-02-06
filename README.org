@@ -4764,3 +4764,49 @@
 	 是/bin或/usr/bin目录下，后两者只放置发行版版本特定的程序。
 
 *** 更多格式规范
+
+	正式脚本的一项关键功能就是方便维护。
+
+**** 参数全写
+
+	 许多命令行参数都有全写和简写2种形式，如ls命令：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls -ad
+	 #+END_EXAMPLE
+
+	 全写形式为：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ ls --all --directory
+	 #+END_EXAMPLE
+
+	 为方便输入，一般在命令行中使用简写形式；单在脚本文件中，为方便阅
+	 读，最好使用全写形式。
+
+**** 缩进和行延续
+
+	 如在17章使用的命令：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ find playground/ \( -type f -not -perm 0600 -exec chmod 0600 '{}' ';' \) -or \( -type d -
+       not -perm 0700 -exec chmod 0700 '{}' '; \)
+	 #+END_EXAMPLE
+
+	 在脚本中，为方便阅读可利用行延续和缩进改写为：
+
+	 #+BEGIN_SRC shell-script
+       #!/bin/bash
+       find playground \
+            \( \
+            -type f \
+            -not -perm 0600 \
+            -exec chmod 0600 '{}' ';' \
+            \) \
+            -or \
+            \( \
+            -type d \
+            -not -perm 0700 \
+            -exec chmod 0700 '{}' ';' \
+            \)
+	 #+END_SRC
