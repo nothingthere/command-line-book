@@ -4444,4 +4444,116 @@
        no entries
 	 #+END_EXAMPLE
 
+** 编译程序
+
+   - *make* ：维护程序。
+
+   程序编译可能相当复杂，本章只介绍基础用法，以便进一步学习。
+
+*** 何为编译
+
+	简单讲，编译就是将源代码转换为机器码。
+
+	使用高级语言，如C和C++等，通过编译器（compiler）编译为机器码。有些
+	编译器先将源代码处理为汇编，再使用汇编器（assembler）转换为机器码。
+
+	一个通常与编译一起执行的过程成为“链接（linking）”。连接器（linker）
+	将库文件（libraries）与编译器编译结果链接起来，最终生成可执行文件。
+	库文件通常位于/lib和/usr/lib文件夹内。
+
+**** 是否所有程序都需编译
+
+	 解释性语言（或脚本语言）编写的程序无需编译，如Python、Ruby和Perl
+	 等。程序执行时，每次都需使用“解释器（interpreter）”处理。
+
+*** 编译一个C程序
+
+	编译一个程序需具备编译器、连接器和make。Linux环境中，默认的C语言编
+	译器为gcc（GNU C Compiler）。使用下面命令查看：
+
+	#+BEGIN_EXAMPLE
+      claudio@kali:~/foo$ which gcc
+      /usr/bin/gcc
+	#+END_EXAMPLE
+
+**** 获取源代码
+
+	 作为练习，下面编译一个GNU工程下的diction程序。该程序的作用主要是
+	 检查文本文件的书写质量和风格。
+
+	 下面创建~/src文件夹，并使用ftp程序获取源码：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/foo$ mkdir ~/src
+       claudio@kali:~/foo$ cd ~/src/
+       claudio@kali:~/src$ ftp ftp.gnu.org
+       Connected to ftp.gnu.org.
+       220 GNU FTP server ready.
+       Name (ftp.gnu.org:claudio): anonymous
+       230-Due to U.S. Export Regulations, all cryptographic software on this
+       230-site is subject to the following legal notice:
+       230-
+       230-    This site includes publicly available encryption source code
+       230-    which, together with object code resulting from the compiling of
+       230-    publicly available source code, may be exported from the United
+       230-    States under License Exception "TSU" pursuant to 15 C.F.R. Section
+       230-    740.13(e).
+       230-
+       230-This legal notice applies to cryptographic software only. Please see
+       230-the Bureau of Industry and Security (www.bxa.doc.gov) for more
+       230-information about current U.S. regulations.
+       230 Login successful.
+       Remote system type is UNIX.
+       Using binary mode to transfer files.
+       ftp> cd gnu/diction
+       250 Directory successfully changed.
+       ftp> ls
+       200 PORT command successful. Consider using PASV.
+       150 Here comes the directory listing.
+       -rw-r--r--    1 3003     65534       68940 Aug 28  1998 diction-0.7.tar.gz
+       -rw-r--r--    1 3003     65534       90957 Mar 04  2002 diction-1.02.tar.gz
+       -rw-r--r--    1 3003     65534      141062 Sep 17  2007 diction-1.11.tar.gz
+       -rw-r--r--    1 3003     65534         189 Sep 17  2007 diction-1.11.tar.gz.sig
+       226 Directory send OK.
+       ftp> get diction-1.11.tar.gz
+       local: diction-1.11.tar.gz remote: diction-1.11.tar.gz
+       200 PORT command successful. Consider using PASV.
+       150 Opening BINARY mode data connection for diction-1.11.tar.gz (141062 bytes).
+       226 Transfer complete.
+       141062 bytes received in 1.08 secs (128.0040 kB/s)
+       ftp> bye
+       221 Goodbye.
+       claudio@kali:~/src$ ls
+       diction-1.11.tar.gz
+	 #+END_EXAMPLE
+
+	 #+BEGIN_QUOTE
+	 由于编译时，我们为源码的“维护者”，所以将代码放置在文件夹~/src内。
+	 不同发行版本中的源码通常放置在/usr/src文件夹内，供多用户使用的源
+	 码则是放置在文件夹/usr/local/src内。
+	 #+END_QUOTE
+
+	 下面使用tar程序解压：
+
+	 #+BEGIN_EXAMPLE
+       claudio@kali:~/src$ tar xzf diction-1.11.tar.gz
+       claudio@kali:~/src$ ls
+       diction-1.11  diction-1.11.tar.gz
+	 #+END_EXAMPLE
+
+	 #+BEGIN_QUOTE
+	 GNU工程程序的命名规则通常时"project-x.xx"，即程序名后跟版本号。
+
+	 有些工程的压缩文件解压后可能不会生成单独文件夹，为防止解压后造成
+	 原文件夹混乱，可使用tar程序的查看功能：
+
+	 #+BEGIN_SRC shell-script
+       tar tzvf tarfile | head
+	 #+END_SRC
+
+	 #+END_QUOTE
+**** 查看源文件树
+**** 构建（build）程序
+**** 安装程序
+*** [[http://www.gnu.org/software/make/manual/html_node/index.html][make手册（不为原书内容）]]
 * Writing Shell Scripts
